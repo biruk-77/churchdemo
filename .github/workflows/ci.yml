@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 env:
-  FLUTTER_VERSION: '3.32.0'
+  FLUTTER_CHANNEL: stable    # always uses latest stable — no version pin
   JAVA_VERSION: '17'
 
 jobs:

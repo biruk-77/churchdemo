@@ -1,30 +1,64 @@
-name: Build APK
+name: Build & Release APK
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+    branches: [main]        # auto-release on every merge to main
   workflow_dispatch:
     inputs:
-      build_type:
-        description: 'Build type'
+      release_type:
+        description: 'What to bump'
         required: true
-        default: 'debug'
+        default: 'build'
         type: choice
         options:
-          - debug
-          - release
+          - build     # 1.0.0+5  →  1.0.0+6
+          - patch     # 1.0.0+5  →  1.0.1+1
+          - minor     # 1.0.0+5  →  1.1.0+1
+          - major     # 1.0.0+5  →  2.0.0+1
+
+permissions:
+  contents: write   # needed to push version commit and create release
 
 jobs:
-  build-apk:
-    name: Build Android APK
+  release:
+    name: Version, Build & Release APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so release notes show all commits
 
+      # ── 2. Parse & bump version ──────────────────────────────────────────────
+      - name: Bump version in pubspec.yaml
+        id: version
+        run: |
+          RAW=$(grep "^version:" pubspec.yaml | awk '{print $2}')
+          # Split  "1.2.3+45"  →  name="1.2.3"  build="45"
+          NAME=${RAW%%+*}
+          BUILD=${RAW##*+}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$NAME"
+
+          TYPE="${{ github.event.inputs.release_type || 'build' }}"
+          case $TYPE in
+            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0; BUILD=1 ;;
+            minor) MINOR=$((MINOR+1)); PATCH=0; BUILD=1 ;;
+            patch) PATCH=$((PATCH+1)); BUILD=1 ;;
+            *)     BUILD=$((BUILD+1)) ;;           # default: bump build only
+          esac
+
+          NEW_NAME="$MAJOR.$MINOR.$PATCH"
+          NEW_VERSION="$NEW_NAME+$BUILD"
+          sed -i "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
+
+          echo "version_name=$NEW_NAME"   >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD"      >> $GITHUB_OUTPUT
+          echo "full_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW_NAME+$BUILD"    >> $GITHUB_OUTPUT
+
+      # ── 3. Set up tools ───────────────────────────────────────────────────────
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -34,33 +68,57 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.0'
-          channel: stable
+          channel: stable    # always uses the latest stable — no version pin
           cache: true
 
+      # ── 4. Build ──────────────────────────────────────────────────────────────
       - name: Install dependencies
         run: flutter pub get
 
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Build debug APK
-        if: github.event.inputs.build_type != 'release'
-        run: flutter build apk --debug
-
       - name: Build release APK
-        if: github.event.inputs.build_type == 'release'
         run: |
           flutter build apk --release \
+            --build-name=${{ steps.version.outputs.version_name }} \
+            --build-number=${{ steps.version.outputs.build_number }} \
             --dart-define=CHAPA_SECRET_KEY=${{ secrets.CHAPA_SECRET_KEY }} \
             --dart-define=TELEBIRR_APP_KEY=${{ secrets.TELEBIRR_APP_KEY }}
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/eotc-church-v${{ steps.version.outputs.full_version }}.apk
+
+      # ── 5. Commit version bump ────────────────────────────────────────────────
+      - name: Commit & tag version bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git commit -m "chore: bump version to ${{ steps.version.outputs.full_version }} [skip ci]"
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin HEAD:main --tags
+
+      # ── 6. Create GitHub Release ──────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: church-app-${{ github.event.inputs.build_type || 'debug' }}-apk
-          path: |
-            build/app/outputs/flutter-apk/app-debug.apk
-            build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: ignore
-          retention-days: 14
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "EOTC Church App ${{ steps.version.outputs.version_name }} (Build ${{ steps.version.outputs.build_number }})"
+          body: |
+            ## EOTC Digital Contribution App
+            **Version:** ${{ steps.version.outputs.version_name }}
+            **Build:** ${{ steps.version.outputs.build_number }}
+
+            ### Install
+            Download `eotc-church-v${{ steps.version.outputs.full_version }}.apk` below and install on your Android device.
+            *(Enable "Install from unknown sources" if sideloading outside the Play Store.)*
+
+            ### What's changed
+          generate_release_notes: true    # auto-fills commit list since last tag
+          files: |
+            build/app/outputs/flutter-apk/eotc-church-v${{ steps.version.outputs.full_version }}.apk
+          draft: false
+          prerelease: false
