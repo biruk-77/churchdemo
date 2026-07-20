@@ -21,3 +21,12 @@
 -keepattributes *Annotation*
 -keepattributes Signature
 -keepattributes Exceptions
+
+# Flutter Play Core (deferred components) — suppress R8 missing class errors
+# These are referenced by Flutter internals but not used unless you enable deferred components
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+
+# Suppress R8 notes about deprecated APIs in third-party libs
+-dontnote com.google.android.play.core.**
+-dontnote io.flutter.**

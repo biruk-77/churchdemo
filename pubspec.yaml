@@ -71,10 +71,10 @@ flutter:
   generate: true
   uses-material-design: true
 
-  assets:
-    - assets/images/
-    - assets/icons/
-    - assets/animations/
+  # assets:           ← uncomment and add files here when you have actual assets
+  #   - assets/images/
+  #   - assets/icons/
+  #   - assets/animations/
 
   # fonts:
   #   - family: NotoSansEthiopic
