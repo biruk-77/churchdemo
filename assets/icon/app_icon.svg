@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- ── Background ── -->
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%"  stop-color="#223389"/>
+      <stop offset="100%" stop-color="#0D1257"/>
+    </radialGradient>
+    <radialGradient id="goldGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%"  stop-color="#E8C84A"/>
+      <stop offset="100%" stop-color="#9C7A1A"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded-square background -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bgGrad)"/>
+
+  <!-- Subtle inner glow ring -->
+  <rect x="30" y="30" width="964" height="964" rx="200" ry="200"
+        fill="none" stroke="#C9A227" stroke-width="6" opacity="0.25"/>
+
+  <!-- ── Ethiopian Cross ── -->
+  <!-- Vertical bar -->
+  <rect x="468" y="148" width="88" height="728" rx="20" fill="url(#goldGrad)" filter="url(#glow)"/>
+  <!-- Horizontal bar -->
+  <rect x="148" y="348" width="728" height="88" rx="20" fill="url(#goldGrad)" filter="url(#glow)"/>
+
+  <!-- ── Arm terminal diamonds (Ethiopian cross style) ── -->
+  <!-- Top -->
+  <polygon points="512,110 548,175 512,240 476,175" fill="url(#goldGrad)"/>
+  <!-- Bottom -->
+  <polygon points="512,784 548,849 512,914 476,849" fill="url(#goldGrad)"/>
+  <!-- Left -->
+  <polygon points="110,392 175,428 240,392 175,356" fill="url(#goldGrad)"/>
+  <!-- Right -->
+  <polygon points="914,392 849,428 784,392 849,356" fill="url(#goldGrad)"/>
+
+  <!-- ── Center halo (circular frame around intersection) ── -->
+  <circle cx="512" cy="392" r="100" fill="none" stroke="url(#goldGrad)" stroke-width="16" opacity="0.9"/>
+  <circle cx="512" cy="392" r="72"  fill="none" stroke="url(#goldGrad)" stroke-width="8"  opacity="0.55"/>
+
+  <!-- Cross centre dot -->
+  <circle cx="512" cy="392" r="28" fill="url(#goldGrad)"/>
+
+  <!-- ── Ethiopian cross lattice details ── -->
+  <!-- Small cross notches on each arm (the woven / knotwork style) -->
+  <!-- Top arm notches -->
+  <rect x="497" y="268" width="30" height="6" rx="3" fill="#0D1257" opacity="0.7"/>
+  <rect x="497" y="282" width="30" height="6" rx="3" fill="#0D1257" opacity="0.7"/>
+  <!-- Bottom arm notches -->
+  <rect x="497" y="716" width="30" height="6" rx="3" fill="#0D1257" opacity="0.7"/>
+  <rect x="497" y="730" width="30" height="6" rx="3" fill="#0D1257" opacity="0.7"/>
+  <!-- Left arm notches -->
+  <rect x="268" y="385" width="6" height="30" rx="3" fill="#0D1257" opacity="0.7"/>
+  <rect x="282" y="385" width="6" height="30" rx="3" fill="#0D1257" opacity="0.7"/>
+  <!-- Right arm notches -->
+  <rect x="736" y="385" width="6" height="30" rx="3" fill="#0D1257" opacity="0.7"/>
+  <rect x="750" y="385" width="6" height="30" rx="3" fill="#0D1257" opacity="0.7"/>
+
+  <!-- ── Bottom text strip ── -->
+  <rect x="148" y="820" width="728" height="72" rx="16" fill="#C9A227" opacity="0.15"/>
+  <text x="512" y="869" font-family="serif" font-size="42" font-weight="bold"
+        fill="#C9A227" text-anchor="middle" letter-spacing="4" opacity="0.85">
+    EOTC
+  </text>
+</svg>

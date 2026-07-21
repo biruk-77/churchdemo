@@ -7,8 +7,8 @@ class AppColors {
   static const Color orthodoxBlue = Color(0xFF1A237E);
   static const Color orthodoxBlueLight = Color(0xFF3949AB);
   static const Color orthodoxBlueDark = Color(0xFF0D1257);
-  static const Color background = Color(0xFFFAF8F2);
-  static const Color surface = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFFDF9F0); // cream deep white
+  static const Color surface = Color(0xFFFFFEFA);    // warm white surface
   static const Color error = Color(0xFFB00020);
   static const Color success = Color(0xFF2E7D32);
   static const Color warning = Color(0xFFF57F17);

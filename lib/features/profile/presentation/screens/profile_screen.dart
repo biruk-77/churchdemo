@@ -131,6 +131,21 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
+                    leading: const Icon(Icons.church_rounded, color: AppTheme.primaryBlue),
+                    title: Text(l10n.myChurch),
+                    subtitle: Text(
+                      user?.churchId != null
+                          ? 'ID: ${user!.churchId!.substring(0, 8).toUpperCase()}...'
+                          : 'No church selected',
+                    ),
+                    trailing: TextButton.icon(
+                      onPressed: () => context.push('/church-select'),
+                      icon: const Icon(Icons.swap_horiz, size: 18),
+                      label: Text(l10n.changeChurch),
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  ListTile(
                     leading: const Icon(Icons.language, color: AppTheme.primaryBlue),
                     title: Text(l10n.language),
                     trailing: Row(

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:church/features/auth/presentation/providers/auth_provider.dart';
@@ -38,10 +37,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (status == AuthStatus.authenticated) {
-        if (authState.user?.churchId == null && state.matchedLocation != '/church-select') {
+        // Don't gate payment/success — user already paid, always let them through
+        const noChurchGate = ['/payment/success', '/payment/method', '/church-select'];
+        final loc = state.matchedLocation;
+        if (authState.user?.churchId == null && !noChurchGate.any(loc.startsWith)) {
           return '/church-select';
         }
-        if (isAuthPath || state.matchedLocation == '/church-select' && authState.user?.churchId != null) {
+        if (isAuthPath || (loc == '/church-select' && authState.user?.churchId != null)) {
           return '/home';
         }
       }

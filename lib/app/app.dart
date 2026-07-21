@@ -16,8 +16,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'EOTC Digital Contribution',
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light, // always cream — ignore device dark mode
       routerConfig: router,
       localizationsDelegates: const [
         AppLocalizations.delegate,

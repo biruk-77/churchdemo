@@ -7,8 +7,8 @@ class AppTheme {
   static const Color accentGold = Color(0xFFFFD54F);
   
   // Neutral Colors
-  static const Color backgroundLight = Color(0xFFF8F9FE);
-  static const Color surfaceLight = Colors.white;
+  static const Color backgroundLight = Color(0xFFF8F4EA); // rich cream deep white
+  static const Color surfaceLight = Color(0xFFFFFDF8);    // warm cream white surface
   static const Color textDark = Color(0xFF1A1C1E);
   static const Color textLight = Color(0xFFE2E2E6);
   static const Color borderLight = Color(0xFFE0E2EC);
@@ -27,9 +27,11 @@ class AppTheme {
         primary: primaryBlue,
         secondary: primaryGold,
         surface: surfaceLight,
+        surfaceContainerHighest: Color(0xFFF5EFE0),
         error: Color(0xFFBA1A1A),
         onPrimary: Colors.white,
         onSecondary: Colors.white,
+        onSurface: Color(0xFF1A1C1E),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryBlue,

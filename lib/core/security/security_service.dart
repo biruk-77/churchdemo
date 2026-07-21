@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:church/core/logger/app_logger.dart';
 
 class SecurityService {
   static const MethodChannel _channel = MethodChannel(
@@ -15,7 +16,7 @@ class SecurityService {
       try {
         await _channel.invokeMethod<void>('enableSecureMode');
       } on PlatformException catch (e) {
-        debugPrint('SecurityService: enableSecureMode failed: $e');
+        log.w('SecurityService', 'enableSecureMode failed', error: e);
       }
     }
   }
@@ -26,7 +27,7 @@ class SecurityService {
       try {
         await _channel.invokeMethod<void>('disableSecureMode');
       } on PlatformException catch (e) {
-        debugPrint('SecurityService: disableSecureMode failed: $e');
+        log.w('SecurityService', 'disableSecureMode failed', error: e);
       }
     }
   }

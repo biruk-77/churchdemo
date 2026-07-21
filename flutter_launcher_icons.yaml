@@ -1,0 +1,25 @@
+flutter_launcher_icons:
+  # ── Android ──────────────────────────────────────────────────────────────
+  android: true
+  image_path: "assets/icon/app_icon.png"          # PNG version (convert from SVG first)
+
+  # Adaptive icon (Android 8.0+)
+  adaptive_icon_background: "#1A237E"             # Orthodox Blue
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+
+  # ── iOS ──────────────────────────────────────────────────────────────────
+  ios: true
+  image_path_ios: "assets/icon/app_icon.png"
+
+  # ── Web ──────────────────────────────────────────────────────────────────
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#1A237E"
+    theme_color: "#C9A227"
+
+  # ── Windows ──────────────────────────────────────────────────────────────
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 48
