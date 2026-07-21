@@ -2,7 +2,7 @@ name: church
 description: "Digital Asrat, Bekuart & Donation Collection for the Ethiopian Orthodox Tewahedo Church"
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.10.0
