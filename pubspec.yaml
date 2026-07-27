@@ -72,10 +72,10 @@ flutter:
   generate: true
   uses-material-design: true
 
-  # assets:           ← uncomment and add files here when you have actual assets
-  #   - assets/images/
-  #   - assets/icons/
-  #   - assets/animations/
+  assets:
+    - assets/images/      # PNG/JPG images
+    - assets/icons/       # SVG/PNG icons
+    - assets/animations/  # Lottie .json files — drop them here, then use lottie: Lottie.asset('assets/animations/name.json')
 
   # fonts:
   #   - family: NotoSansEthiopic

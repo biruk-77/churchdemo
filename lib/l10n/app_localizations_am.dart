@@ -177,6 +177,9 @@ class AppLocalizationsAm extends AppLocalizations {
   String get emergency => 'አስቸኳይ ፈንድ';
 
   @override
+  String get specialCollection => 'ልዩ ሰብሳቢ';
+
+  @override
   String get selectContributionType => 'የአስተዋፅዖ አይነት ይምረጡ';
 
   @override

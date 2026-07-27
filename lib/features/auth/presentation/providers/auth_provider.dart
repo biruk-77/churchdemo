@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:church/features/auth/data/auth_repository.dart';
 import 'package:church/features/auth/data/user_model.dart';
+import 'package:church/features/notifications/data/notification_service.dart';
 
 // ── Session persistence keys ───────────────────────────────────────────────────
 const _kSessionUid      = 'session_uid';
@@ -14,10 +16,15 @@ const _kSessionChurchId = 'session_church_id';
 const _kSessionStatus   = 'session_status';
 
 // ── Debug mock config ─────────────────────────────────────────────────────────
-// In DEBUG builds, any phone number is accepted and OTP 123456 bypasses Firebase.
+// In DEBUG builds, any phone number is accepted and a random 6-digit OTP is
+// delivered via local push notification instead of SMS.
 // Disabled automatically in release builds.
 const _kMockVerificationId = '__DEBUG_MOCK__';
-const _kMockOtp            = '123456';
+
+String _generateDebugOtp() {
+  final rng = Random.secure();
+  return (100000 + rng.nextInt(900000)).toString();
+}
 
 enum AuthStatus {
   initial,
@@ -68,15 +75,20 @@ final authStateProvider =
 
 class AuthNotifier extends Notifier<AuthState> {
   late final AuthRepository _authRepository;
+  late final NotificationService _notificationService;
 
   // Stored so verifyOtp can build the mock UserModel
   String? _pendingPhone;
 
+  // Random 6-digit code generated fresh for each sendOtp call in debug mode
+  String _currentMockOtp = '000000';
+
   @override
   AuthState build() {
     _authRepository = ref.read(authRepositoryProvider);
+    _notificationService = ref.read(notificationServiceProvider);
     _listenToAuthChanges();
-    _restoreSession();        // ← restores session on cold start
+    _restoreSession();
     return const AuthState(status: AuthStatus.initial);
   }
 
@@ -199,13 +211,20 @@ class AuthNotifier extends Notifier<AuthState> {
 
     // ── DEBUG MOCK ─────────────────────────────────────────────────────────
     if (kDebugMode) {
-      await Future.delayed(const Duration(milliseconds: 400));
+      // Generate a fresh random 6-digit code every time
+      _currentMockOtp = _generateDebugOtp();
+      await Future.delayed(const Duration(milliseconds: 500));
       state = state.copyWith(
         status:         AuthStatus.codeSent,
         verificationId: _kMockVerificationId,
         isLoading:      false,
       );
-      debugPrint('[AuthMock] Code sent to $phone — use OTP: $_kMockOtp');
+      // Fire a real local push notification with the code
+      await _notificationService.showOtpNotification(
+        phone: phone,
+        code:  _currentMockOtp,
+      );
+      debugPrint('[AuthMock] OTP for $phone → $_currentMockOtp  (also sent as push notification)');
       return;
     }
     // ── END DEBUG MOCK ─────────────────────────────────────────────────────
@@ -219,6 +238,8 @@ class AuthNotifier extends Notifier<AuthState> {
             verificationId: verificationId,
             isLoading:      false,
           );
+          // Notify the user that an SMS code was sent (no code revealed)
+          _notificationService.showCodeSentConfirmation(phone: phone);
         },
         verificationFailed: (e) {
           state = state.copyWith(
@@ -256,10 +277,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
     // ── DEBUG MOCK ─────────────────────────────────────────────────────────
     if (kDebugMode && verId == _kMockVerificationId) {
-      if (smsCode != _kMockOtp) {
+      if (smsCode != _currentMockOtp) {
         state = state.copyWith(
           status:       AuthStatus.codeSent,
-          errorMessage: 'Wrong code. Use $_kMockOtp in debug mode.',
+          errorMessage: 'Wrong code — check your notification for the code.',
           isLoading:    false,
         );
         return;
@@ -270,8 +291,29 @@ class AuthNotifier extends Notifier<AuthState> {
       final uid   = 'debug_${phone.replaceAll(RegExp(r'[^\d]'), '')}';
 
       // Re-use existing profile if already created, otherwise prompt setup
-      final existing = await _authRepository.getUserProfile(uid);
-      if (existing != null) {
+      UserModel? existing;
+      try {
+        existing = await _authRepository.getUserProfile(uid);
+      } catch (_) {}
+
+      // If Firestore is unavailable, fall back to the persisted session
+      if (existing == null) {
+        final prefs = await SharedPreferences.getInstance();
+        final savedName = prefs.getString(_kSessionName) ?? '';
+        final savedChurch = prefs.getString(_kSessionChurchId);
+        if (savedName.isNotEmpty) {
+          existing = UserModel(
+            uid: uid,
+            phone: phone,
+            displayName: savedName,
+            email: prefs.getString(_kSessionEmail),
+            churchId: savedChurch,
+            role: 'member',
+          );
+        }
+      }
+
+      if (existing != null && existing.displayName.isNotEmpty) {
         state = AuthState(status: AuthStatus.authenticated, user: existing);
         await _saveSession(existing, AuthStatus.authenticated);
       } else {
@@ -279,6 +321,8 @@ class AuthNotifier extends Notifier<AuthState> {
         state = AuthState(status: AuthStatus.needsProfileSetup, user: newUser);
         await _saveSession(newUser, AuthStatus.needsProfileSetup);
       }
+      // Dismiss the OTP notification now that the code was accepted
+      await _notificationService.dismissOtpNotification();
       debugPrint('[AuthMock] Signed in as mock user uid=$uid');
       return;
     }

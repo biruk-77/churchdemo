@@ -177,6 +177,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emergency => 'Emergency Fund';
 
   @override
+  String get specialCollection => 'Special Collection';
+
+  @override
   String get selectContributionType => 'Select Contribution Type';
 
   @override

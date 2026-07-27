@@ -4,94 +4,85 @@ import 'package:go_router/go_router.dart';
 import 'package:church/app/theme.dart';
 import 'package:church/l10n/app_localizations.dart';
 
-class ContributeScreen extends ConsumerWidget {
+class ContributeScreen extends ConsumerStatefulWidget {
   const ContributeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+  ConsumerState<ContributeScreen> createState() => _ContributeScreenState();
+}
 
-    final contributionItems = [
-      _ContributeOption(type: 'asrat', label: l10n.asrat, icon: Icons.percent, color: AppTheme.primaryGold),
-      _ContributeOption(type: 'bekuart', label: l10n.bekuart, icon: Icons.card_giftcard, color: AppTheme.primaryBlue),
-      _ContributeOption(type: 'monthly', label: l10n.monthly, icon: Icons.calendar_month, color: Colors.teal),
-      _ContributeOption(type: 'buildingFund', label: l10n.buildingFund, icon: Icons.build_circle, color: Colors.indigo),
-      _ContributeOption(type: 'charity', label: l10n.charity, icon: Icons.favorite, color: Colors.red),
-      _ContributeOption(type: 'festival', label: l10n.festival, icon: Icons.celebration, color: Colors.orange),
-      _ContributeOption(type: 'candle', label: l10n.candle, icon: Icons.light, color: Colors.amber),
-      _ContributeOption(type: 'memorial', label: l10n.memorial, icon: Icons.history, color: Colors.grey),
-      _ContributeOption(type: 'monastery', label: l10n.monastery, icon: Icons.castle, color: Colors.orangeAccent),
-      _ContributeOption(type: 'priest', label: l10n.priest, icon: Icons.person_pin, color: Colors.brown),
-      _ContributeOption(type: 'sundaySchool', label: l10n.sundaySchool, icon: Icons.school, color: Colors.green),
-      _ContributeOption(type: 'youth', label: l10n.youth, icon: Icons.groups, color: Colors.blue),
-      _ContributeOption(type: 'women', label: l10n.women, icon: Icons.woman, color: Colors.pink),
-      _ContributeOption(type: 'development', label: l10n.development, icon: Icons.developer_mode, color: Colors.cyan),
-      _ContributeOption(type: 'emergency', label: l10n.emergency, icon: Icons.warning_amber, color: Colors.redAccent),
-    ];
+class _ContributeScreenState extends ConsumerState<ContributeScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _stagger;
+  late final List<Animation<double>> _fades;
+  late final List<Animation<Offset>> _slides;
+
+  static const _count = 16;
+
+  @override
+  void initState() {
+    super.initState();
+    // 16 cards × 50ms stagger + 500ms per card = 1300ms total
+    _stagger = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..forward();
+
+    _fades = List.generate(_count, (i) {
+      final s = i * 0.045;
+      return Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _stagger, curve: Interval(s, (s + 0.3).clamp(0, 1.0), curve: Curves.easeOut)),
+      );
+    });
+    _slides = List.generate(_count, (i) {
+      final s = i * 0.045;
+      return Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+        CurvedAnimation(parent: _stagger, curve: Interval(s, (s + 0.45).clamp(0, 1.0), curve: Curves.easeOutBack)),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _stagger.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final items = _buildItems(l10n);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.selectContributionType),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text(l10n.selectContributionType), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               l10n.selectContributionType,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlue,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.25,
-                ),
-                itemCount: contributionItems.length,
-                itemBuilder: (context, index) {
-                  final item = contributionItems[index];
-                  return InkWell(
-                    onTap: () {
-                      context.push('/contribute/amount', extra: item.type);
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Card(
-                      margin: EdgeInsets.zero,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: item.color.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(item.icon, color: item.color, size: 24),
-                            ),
-                            Text(
-                              item.label,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
+              child: AnimatedBuilder(
+                animation: _stagger,
+                builder: (context, _) {
+                  return GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.25,
+                    ),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) => FadeTransition(
+                      opacity: _fades[i],
+                      child: SlideTransition(
+                        position: _slides[i],
+                        child: _ContributeCard(item: items[i]),
                       ),
                     ),
                   );
@@ -103,18 +94,111 @@ class ContributeScreen extends ConsumerWidget {
       ),
     );
   }
+
+  List<_Item> _buildItems(AppLocalizations l10n) => [
+        _Item(l10n.asrat, Icons.percent, AppTheme.primaryGold, 'asrat'),
+        _Item(l10n.bekuart, Icons.card_giftcard, AppTheme.primaryBlue, 'bekuart'),
+        _Item(l10n.monthly, Icons.calendar_month, Colors.teal, 'monthly'),
+        _Item(l10n.buildingFund, Icons.build_circle, Colors.indigo, 'buildingFund'),
+        _Item(l10n.charity, Icons.favorite, Colors.red, 'charity'),
+        _Item(l10n.festival, Icons.celebration, Colors.orange, 'festival'),
+        _Item(l10n.candle, Icons.light, Colors.amber, 'candle'),
+        _Item(l10n.memorial, Icons.history, Colors.grey, 'memorial'),
+        _Item(l10n.monastery, Icons.castle, Colors.deepOrange, 'monastery'),
+        _Item(l10n.priest, Icons.person_pin, Colors.brown, 'priest'),
+        _Item(l10n.sundaySchool, Icons.school, Colors.green, 'sundaySchool'),
+        _Item(l10n.youth, Icons.groups, Colors.blue, 'youth'),
+        _Item(l10n.women, Icons.woman, Colors.pink, 'women'),
+        _Item(l10n.development, Icons.developer_mode, Colors.cyan, 'development'),
+        _Item(l10n.emergency, Icons.warning_amber, Colors.redAccent, 'emergency'),
+        _Item(l10n.specialCollection, Icons.stars_rounded, Colors.purple, 'specialCollection'),
+      ];
 }
 
-class _ContributeOption {
-  final String type;
-  final String label;
+class _ContributeCard extends StatefulWidget {
+  final _Item item;
+  const _ContributeCard({required this.item});
+
+  @override
+  State<_ContributeCard> createState() => _ContributeCardState();
+}
+
+class _ContributeCardState extends State<_ContributeCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breathe;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _breathe = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800))
+      ..repeat(reverse: true);
+    _scale = Tween<double>(begin: 1.0, end: 1.016).animate(
+      CurvedAnimation(parent: _breathe, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _breathe.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    return ScaleTransition(
+      scale: _scale,
+      child: InkWell(
+        onTap: () => context.push('/contribute/amount', extra: item.type),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, item.color.withValues(alpha: 0.07)],
+            ),
+            border: Border.all(color: item.color.withValues(alpha: 0.22), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: item.color.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: item.color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(item.icon, color: item.color, size: 22),
+              ),
+              Text(
+                item.label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Item {
+  final String label, type;
   final IconData icon;
   final Color color;
-
-  _ContributeOption({
-    required this.type,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
+  const _Item(this.label, this.icon, this.color, this.type);
 }

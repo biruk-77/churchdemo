@@ -422,6 +422,12 @@ abstract class AppLocalizations {
   /// **'Emergency Fund'**
   String get emergency;
 
+  /// No description provided for @specialCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Special Collection'**
+  String get specialCollection;
+
   /// No description provided for @selectContributionType.
   ///
   /// In en, this message translates to:

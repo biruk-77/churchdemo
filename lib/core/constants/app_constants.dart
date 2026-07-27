@@ -43,6 +43,11 @@ class AppConstants {
   static const String telebirrAppKey = 'TELEBIRR_APP_KEY_PLACEHOLDER';
   static const String telebirrAppSecret = 'TELEBIRR_APP_SECRET_PLACEHOLDER';
 
+  // Stadia Maps — client key for mobile/non-browser use (see Stadia dashboard
+  // > Properties > API Key). Not wired into any screen yet; reserved for a
+  // future map feature (e.g. nearby churches).
+  static const String stadiaMapsApiKey = '03129f58-b229-4f31-aa27-aeb268e1807b';
+
   // FCM topics
   static const String topicAll = 'all_members';
 

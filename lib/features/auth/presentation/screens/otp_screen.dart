@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,38 +12,61 @@ import 'package:church/l10n/app_localizations.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
-
   const OtpScreen({super.key, required this.phoneNumber});
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends ConsumerState<OtpScreen> {
+class _OtpScreenState extends ConsumerState<OtpScreen>
+    with TickerProviderStateMixin {
   final _pinController = TextEditingController();
   final _focusNode = FocusNode();
   int _timerSeconds = 60;
   Timer? _timer;
 
+  late final AnimationController _entrance;
+  late final AnimationController _pinBounce;
+  late final List<Animation<double>> _fades;
+  late final List<Animation<Offset>> _slides;
+
   @override
   void initState() {
     super.initState();
     _startTimer();
+
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..forward();
+
+    _pinBounce = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _fades = List.generate(4, (i) {
+      final s = i * 0.12;
+      return Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _entrance, curve: Interval(s, (s + 0.4).clamp(0, 1.0), curve: Curves.easeOut)),
+      );
+    });
+    _slides = List.generate(4, (i) {
+      final s = i * 0.12;
+      return Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(
+        CurvedAnimation(parent: _entrance, curve: Interval(s, (s + 0.5).clamp(0, 1.0), curve: Curves.easeOutBack)),
+      );
+    });
   }
 
   void _startTimer() {
     _timerSeconds = 60;
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_timerSeconds == 0) {
-        setState(() {
-          _timer?.cancel();
-        });
-      } else {
-        setState(() {
-          _timerSeconds--;
-        });
-      }
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
+      setState(() {
+        if (_timerSeconds > 0) _timerSeconds--;
+      });
     });
   }
 
@@ -51,29 +75,29 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     _timer?.cancel();
     _pinController.dispose();
     _focusNode.dispose();
+    _entrance.dispose();
+    _pinBounce.dispose();
     super.dispose();
   }
 
-  void _verify(String smsCode) {
-    if (smsCode.length == 6) {
-      ref.read(authStateProvider.notifier).verifyOtp(smsCode);
+  void _verify(String code) {
+    if (code.length == 6) {
+      _pinBounce.forward(from: 0);
+      ref.read(authStateProvider.notifier).verifyOtp(code);
     }
   }
 
-  void _resend() {
-    if (_timerSeconds == 0) {
-      ref.read(authStateProvider.notifier).sendOtp(widget.phoneNumber);
-      _startTimer();
-    }
-  }
+  Widget _animated(int i, Widget child) => FadeTransition(
+        opacity: _fades[i],
+        child: SlideTransition(position: _slides[i], child: child),
+      );
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authStateProvider);
 
-    // Watch status changes to route
-    ref.listen(authStateProvider, (previous, next) {
+    ref.listen(authStateProvider, (_, next) {
       if (next.status == AuthStatus.authenticated) {
         if (next.user?.churchId == null) {
           context.go('/church-select');
@@ -84,32 +108,27 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         context.go('/auth/setup');
       } else if (next.errorMessage != null && next.status != AuthStatus.codeSent) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          SnackBar(content: Text(next.errorMessage!), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     });
 
+    final pinScaleAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.12), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.12, end: 1.0), weight: 60),
+    ]).animate(CurvedAnimation(parent: _pinBounce, curve: Curves.easeInOut));
+
     final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 56,
-      textStyle: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: AppTheme.primaryBlue,
-      ),
+      width: 52,
+      height: 58,
+      textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-    );
-
-    final focusedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration!.copyWith(
-        border: Border.all(color: AppTheme.primaryGold, width: 2),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.borderLight, width: 1.5),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
     );
 
@@ -124,62 +143,175 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           elevation: 0,
         ),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
-                Text(
-                  l10n.otpSubtitle(widget.phoneNumber),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                Pinput(
-                  length: 6,
-                  controller: _pinController,
-                  focusNode: _focusNode,
-                  defaultPinTheme: defaultPinTheme,
-                  focusedPinTheme: focusedPinTheme,
-                  onCompleted: _verify,
-                  autofocus: true,
-                ),
-                const SizedBox(height: 40),
-                if (_timerSeconds > 0)
-                  Text(
-                    l10n.resendIn(_timerSeconds),
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  )
-                else
-                  TextButton(
-                    onPressed: _resend,
-                    child: Text(
-                      l10n.resendOtp,
-                      style: const TextStyle(
-                        color: AppTheme.primaryGold,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height -
+                    MediaQuery.of(context).padding.top -
+                    MediaQuery.of(context).padding.bottom -
+                    kToolbarHeight,
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
+
+                    // Phone icon
+                    _animated(
+                      0,
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                        ),
+                        child: const Icon(Icons.sms_rounded, color: AppTheme.primaryBlue, size: 36),
                       ),
                     ),
-                  ),
-                const Spacer(),
-                PrimaryButton(
-                  text: l10n.verifyOtp,
-                  onPressed: () => _verify(_pinController.text),
+
+                    const SizedBox(height: 20),
+
+                    // Subtitle
+                    _animated(
+                      1,
+                      Text(
+                        l10n.otpSubtitle(widget.phoneNumber),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // PIN input with bounce
+                    _animated(
+                      2,
+                      ScaleTransition(
+                        scale: pinScaleAnim,
+                        child: Pinput(
+                          length: 6,
+                          controller: _pinController,
+                          focusNode: _focusNode,
+                          defaultPinTheme: defaultPinTheme,
+                          focusedPinTheme: defaultPinTheme.copyWith(
+                            decoration: defaultPinTheme.decoration!.copyWith(
+                              border: Border.all(color: AppTheme.primaryGold, width: 2.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryGold.withValues(alpha: 0.25),
+                                  blurRadius: 12,
+                                ),
+                              ],
+                            ),
+                          ),
+                          submittedPinTheme: defaultPinTheme.copyWith(
+                            decoration: defaultPinTheme.decoration!.copyWith(
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                              border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
+                            ),
+                          ),
+                          onCompleted: _verify,
+                          autofocus: true,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Circular countdown
+                    _animated(
+                      3,
+                      _timerSeconds > 0
+                          ? Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 62,
+                                  height: 62,
+                                  child: CustomPaint(
+                                    painter: _CountdownRingPainter(_timerSeconds / 60.0),
+                                  ),
+                                ),
+                                Text(
+                                  '$_timerSeconds',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryBlue,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : TextButton(
+                              onPressed: () {
+                                ref.read(authStateProvider.notifier).sendOtp(widget.phoneNumber);
+                                _startTimer();
+                              },
+                              child: Text(
+                                l10n.resendOtp,
+                                style: const TextStyle(
+                                  color: AppTheme.primaryGold,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                    ),
+
+                    const Spacer(),
+
+                    PrimaryButton(
+                      text: l10n.verifyOtp,
+                      onPressed: () => _verify(_pinController.text),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
           ),
         ),
+
       ),
     );
   }
+}
+
+class _CountdownRingPainter extends CustomPainter {
+  final double fraction; // 1.0 = full, 0.0 = empty
+
+  const _CountdownRingPainter(this.fraction);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2 - 3;
+
+    canvas.drawCircle(
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..color = AppTheme.primaryGold.withValues(alpha: 0.15),
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(cx, cy), radius: r),
+      -math.pi / 2,
+      2 * math.pi * fraction,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..strokeCap = StrokeCap.round
+        ..color = AppTheme.primaryGold,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CountdownRingPainter old) => old.fraction != fraction;
 }
