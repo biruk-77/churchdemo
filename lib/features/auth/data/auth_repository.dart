@@ -27,8 +27,18 @@ class AuthRepository {
       }
       log.d(_tag, 'getUserProfile no profile found for uid=$uid');
       return null;
-    } catch (e, stack) {
-      log.e(_tag, 'getUserProfile failed for uid=$uid', error: e, stack: stack);
+    } catch (e) {
+      try {
+        final doc = await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(uid)
+            .get(const GetOptions(source: Source.cache));
+        if (doc.exists && doc.data() != null) {
+          log.d(_tag, 'getUserProfile loaded from offline cache for uid=$uid');
+          return UserModel.fromMap(doc.data()!, uid);
+        }
+      } catch (_) {}
+      log.w(_tag, 'getUserProfile offline or unavailable for uid=$uid: $e');
       return null;
     }
   }

@@ -16,10 +16,16 @@ class PhoneAuthScreen extends ConsumerStatefulWidget {
   ConsumerState<PhoneAuthScreen> createState() => _PhoneAuthScreenState();
 }
 
+enum AuthView { phone, signIn, signUp }
+
 class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+  AuthView _authView = AuthView.signIn;
 
   late final AnimationController _headerCtrl;
   late final AnimationController _cardCtrl;
@@ -96,6 +102,9 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
   @override
   void dispose() {
     _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
     _headerCtrl.dispose();
     _cardCtrl.dispose();
     super.dispose();
@@ -103,16 +112,68 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      var phone = _phoneController.text.trim();
-      if (!phone.startsWith('+')) {
-        if (phone.startsWith('0')) {
-          phone = '+251${phone.substring(1)}';
-        } else if (phone.startsWith('9') || phone.startsWith('7')) {
-          phone = '+251$phone';
+      if (_authView == AuthView.signUp) {
+        ref.read(authStateProvider.notifier).signUpWithEmail(
+          _nameController.text.trim(),
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+      } else if (_authView == AuthView.signIn) {
+        ref.read(authStateProvider.notifier).signInWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+      } else {
+        var phone = _phoneController.text.trim();
+        if (!phone.startsWith('+')) {
+          if (phone.startsWith('0')) {
+            phone = '+251${phone.substring(1)}';
+          } else if (phone.startsWith('9') || phone.startsWith('7')) {
+            phone = '+251$phone';
+          }
         }
+        ref.read(authStateProvider.notifier).sendOtp(phone);
       }
-      ref.read(authStateProvider.notifier).sendOtp(phone);
     }
+  }
+
+  Widget _buildTabItem(String text, AuthView view) {
+    final isSelected = _authView == view;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _authView = view;
+            _formKey.currentState?.reset();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? AppTheme.primaryBlue : Colors.black54,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -254,46 +315,109 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                           child: Form(
                             key: _formKey,
                             child: SingleChildScrollView(
-                              padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                              padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // "Sign In" label
-                                  FadeTransition(
-                                    opacity: _cardFades[0],
-                                    child: const Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryBlue,
-                                      ),
+                                  // Tab selector bar
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: Row(
+                                      children: [
+                                        _buildTabItem('Sign In', AuthView.signIn),
+                                        _buildTabItem('Sign Up', AuthView.signUp),
+                                        _buildTabItem('Phone/OTP', AuthView.phone),
+                                      ],
                                     ),
                                   ),
 
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 16),
 
-                                  FadeTransition(
-                                    opacity: _cardFades[0],
-                                    child: Text(
-                                      'Enter your Ethiopian phone number to continue',
-                                      style: TextStyle(fontSize: 14, color: Colors.black.withValues(alpha: 0.45)),
-                                    ),
+                                  Text(
+                                    _authView == AuthView.signUp
+                                        ? 'Fill in details to start your journey'
+                                        : _authView == AuthView.signIn
+                                            ? 'Enter your email & password to continue'
+                                            : 'Enter your Ethiopian phone number to continue',
+                                    style: TextStyle(fontSize: 13, color: Colors.black.withValues(alpha: 0.45)),
                                   ),
 
-                                  const SizedBox(height: 32),
+                                  const SizedBox(height: 24),
 
-                                  // Phone field
-                                  FadeTransition(
-                                    opacity: _cardFades[1],
-                                    child: SlideTransition(
-                                      position: _cardSlides[1],
-                                      child: Column(
+                                  if (_authView == AuthView.phone) ...[
+                                    // Phone field
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.phoneNumber,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.primaryBlue,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextFormField(
+                                          controller: _phoneController,
+                                          keyboardType: TextInputType.phone,
+                                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                                          decoration: InputDecoration(
+                                            hintText: l10n.phoneHint,
+                                            prefixIcon: Container(
+                                              margin: const EdgeInsets.only(right: 1),
+                                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryBlue.withValues(alpha: 0.07),
+                                                borderRadius: const BorderRadius.only(
+                                                  topLeft: Radius.circular(14),
+                                                  bottomLeft: Radius.circular(14),
+                                                ),
+                                              ),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text('🇪🇹', style: TextStyle(fontSize: 18)),
+                                                  SizedBox(width: 6),
+                                                  Text(
+                                                    '+251',
+                                                    style: TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppTheme.primaryBlue,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                          ),
+                                          validator: (value) {
+                                            if (_authView != AuthView.phone) return null;
+                                            if (value == null || value.trim().isEmpty) return l10n.requiredField;
+                                            final clean = value.trim().replaceAll(' ', '').replaceAll('-', '');
+                                            if (!RegExp(r'^(\+251|0)?[97]\d{8}$').hasMatch(clean)) {
+                                              return 'Use: 0928211778 or +251928211778';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ] else ...[
+                                    if (_authView == AuthView.signUp) ...[
+                                      // Full Name field
+                                      Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            l10n.phoneNumber,
-                                            style: const TextStyle(
+                                          const Text(
+                                            'Full Name',
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
                                               color: AppTheme.primaryBlue,
@@ -302,82 +426,211 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                           ),
                                           const SizedBox(height: 8),
                                           TextFormField(
-                                            controller: _phoneController,
-                                            keyboardType: TextInputType.phone,
+                                            controller: _nameController,
+                                            keyboardType: TextInputType.name,
                                             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                                             decoration: InputDecoration(
-                                              hintText: l10n.phoneHint,
-                                              prefixIcon: Container(
-                                                margin: const EdgeInsets.only(right: 1),
-                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                                decoration: BoxDecoration(
-                                                  color: AppTheme.primaryBlue.withValues(alpha: 0.07),
-                                                  borderRadius: const BorderRadius.only(
-                                                    topLeft: Radius.circular(14),
-                                                    bottomLeft: Radius.circular(14),
-                                                  ),
-                                                ),
-                                                child: const Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Text('🇪🇹', style: TextStyle(fontSize: 18)),
-                                                    SizedBox(width: 6),
-                                                    Text(
-                                                      '+251',
-                                                      style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: AppTheme.primaryBlue,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                              hintText: 'Enter your full name',
+                                              prefixIcon: const Icon(Icons.person_outline, color: AppTheme.primaryBlue),
+                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                                             ),
                                             validator: (value) {
-                                              if (value == null || value.trim().isEmpty) return l10n.requiredField;
-                                              final clean = value.trim().replaceAll(' ', '').replaceAll('-', '');
-                                              // Accepts: +251[97]XXXXXXXX  |  0[97]XXXXXXXX  |  [97]XXXXXXXX
-                                              if (!RegExp(r'^(\+251|0)?[97]\d{8}$').hasMatch(clean)) {
-                                                return 'Use: 0928211778 or +251928211778';
-                                              }
+                                              if (_authView != AuthView.signUp) return null;
+                                              if (value == null || value.trim().isEmpty) return 'Full name is required';
                                               return null;
                                             },
                                           ),
                                         ],
                                       ),
+                                      const SizedBox(height: 16),
+                                    ],
+
+                                    // Email field
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Email Address',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.primaryBlue,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextFormField(
+                                          controller: _emailController,
+                                          keyboardType: TextInputType.emailAddress,
+                                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                                          decoration: InputDecoration(
+                                            hintText: 'Enter your email address',
+                                            prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.primaryBlue),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                                          ),
+                                          validator: (value) {
+                                            if (_authView == AuthView.phone) return null;
+                                            if (value == null || value.trim().isEmpty) return 'Email is required';
+                                            if (!value.contains('@') || !value.contains('.')) return 'Enter a valid email address';
+                                            return null;
+                                          },
+                                        ),
+                                      ],
                                     ),
+                                    const SizedBox(height: 16),
+
+                                    // Password field
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Password',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.primaryBlue,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextFormField(
+                                          controller: _passwordController,
+                                          obscureText: true,
+                                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                                          decoration: InputDecoration(
+                                            hintText: 'Enter your password',
+                                            prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryBlue),
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                                          ),
+                                          validator: (value) {
+                                            if (_authView == AuthView.phone) return null;
+                                            if (value == null || value.isEmpty) return 'Password is required';
+                                            if (value.length < 6) return 'Password must be at least 6 characters';
+                                            return null;
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+
+                                  const SizedBox(height: 24),
+
+                                  PrimaryButton(
+                                    text: _authView == AuthView.signUp
+                                        ? 'Sign Up'
+                                        : _authView == AuthView.signIn
+                                            ? 'Sign In'
+                                            : l10n.sendOtp,
+                                    color: AppTheme.primaryBlue,
+                                    onPressed: _submit,
                                   ),
 
-                                  const SizedBox(height: 32),
-
-                                  // Send OTP button — blue background, white text, clearly visible
-                                  FadeTransition(
-                                    opacity: _cardFades[2],
-                                    child: SlideTransition(
-                                      position: _cardSlides[2],
-                                      child: PrimaryButton(
-                                        text: l10n.sendOtp,
-                                        // Explicit blue so white text has 7:1 contrast ratio
-                                        color: AppTheme.primaryBlue,
-                                        onPressed: _submit,
+                                  if (_authView != AuthView.phone) ...[
+                                    const SizedBox(height: 12),
+                                    Center(
+                                      child: TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            if (_authView == AuthView.signIn) {
+                                              _authView = AuthView.signUp;
+                                            } else {
+                                              _authView = AuthView.signIn;
+                                            }
+                                          });
+                                        },
+                                        child: Text(
+                                          _authView == AuthView.signIn
+                                              ? "Don't have an account? Sign Up"
+                                              : "Already have an account? Sign In",
+                                          style: const TextStyle(
+                                            color: AppTheme.primaryGold,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
 
                                   const SizedBox(height: 20),
 
-                                  Center(
-                                    child: FadeTransition(
-                                      opacity: _cardFades[2],
-                                      child: Text(
-                                        'By continuing you agree to our Terms & Privacy Policy',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.black.withValues(alpha: 0.35),
+                                  Row(
+                                    children: [
+                                      Expanded(child: Divider(color: Colors.black.withValues(alpha: 0.1))),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          'Or Sign In With',
+                                          style: TextStyle(fontSize: 12, color: Colors.black.withValues(alpha: 0.38), fontWeight: FontWeight.w500),
                                         ),
+                                      ),
+                                      Expanded(child: Divider(color: Colors.black.withValues(alpha: 0.1))),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      // Google Button
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            ref.read(authStateProvider.notifier).signInWithGoogle();
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            side: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                          icon: Image.network(
+                                            'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
+                                            height: 20,
+                                            width: 20,
+                                            errorBuilder: (ctx, _, __) => const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
+                                          ),
+                                          label: const Text(
+                                            'Google',
+                                            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // Facebook Button
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            ref.read(authStateProvider.notifier).signInWithFacebook();
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            side: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                          icon: Image.network(
+                                            'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/1024px-Facebook_Logo_%282019%29.png',
+                                            height: 20,
+                                            width: 20,
+                                            errorBuilder: (ctx, _, __) => const Icon(Icons.facebook, color: Colors.blue, size: 20),
+                                          ),
+                                          label: const Text(
+                                            'Facebook',
+                                            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  Center(
+                                    child: Text(
+                                      'By continuing you agree to our Terms & Privacy Policy',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black.withValues(alpha: 0.35),
                                       ),
                                     ),
                                   ),

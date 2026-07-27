@@ -125,6 +125,7 @@ class AuthNotifier extends Notifier<AuthState> {
           : AuthStatus.authenticated;
 
       state = AuthState(status: status, user: profile);
+      _notificationService.startBroadcastListener(userChurchId: profile.churchId);
       debugPrint('[AuthSession] Session restored uid=$uid name="$name" churchId=$churchId status=$status');
     } catch (e) {
       debugPrint('[AuthSession] Session restore failed: $e');
@@ -169,7 +170,8 @@ class AuthNotifier extends Notifier<AuthState> {
 
   void _listenToAuthChanges() {
     _authRepository.authStateChanges.listen((User? firebaseUser) async {
-      // Don't override state if session is already active or in mock auth flow
+      // Don't override state if session is already active, loading, or in mock auth flow
+      if (state.isLoading) return;
       if (state.verificationId == _kMockVerificationId) return;
       if (state.status == AuthStatus.authenticated || state.status == AuthStatus.needsProfileSetup) {
         return;
@@ -288,7 +290,42 @@ class AuthNotifier extends Notifier<AuthState> {
 
       await Future.delayed(const Duration(milliseconds: 300));
       final phone = _pendingPhone ?? '+251000000000';
-      final uid   = 'debug_${phone.replaceAll(RegExp(r'[^\d]'), '')}';
+      final clean = phone.replaceAll(RegExp(r'[^\d]'), '');
+      
+      String uid = 'debug_$clean';
+      try {
+        final cred = await FirebaseAuth.instance.signInAnonymously();
+        if (cred.user != null) {
+          uid = cred.user!.uid;
+        }
+      } catch (e) {
+        debugPrint('[AuthMock] Anonymous sign-in failed: $e. Falling back to email sign-in...');
+        try {
+          final email = 'phone_$clean@demo.com';
+          const password = 'PhoneDemoPassword123!';
+          UserCredential cred;
+          try {
+            cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+              email: email,
+              password: password,
+            );
+          } on FirebaseAuthException catch (authErr) {
+            if (authErr.code == 'user-not-found' || authErr.code == 'invalid-credential') {
+              cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                email: email,
+                password: password,
+              );
+            } else {
+              rethrow;
+            }
+          }
+          if (cred.user != null) {
+            uid = cred.user!.uid;
+          }
+        } catch (fallbackError) {
+          debugPrint('[AuthMock] Phone-email fallback registration failed: $fallbackError');
+        }
+      }
 
       // Re-use existing profile if already created, otherwise prompt setup
       UserModel? existing;
@@ -385,6 +422,206 @@ class AuthNotifier extends Notifier<AuthState> {
       await _saveSession(updatedUser, state.status);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
+
+  Future<void> signUpWithEmail(String displayName, String email, String password) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+
+      final firebaseUser = credential.user;
+      if (firebaseUser != null) {
+        final user = UserModel(
+          uid:         firebaseUser.uid,
+          displayName: displayName.trim(),
+          email:       email.trim(),
+          phone:       '',
+          role:        'member',
+          createdAt:   DateTime.now(),
+        );
+
+        await _authRepository.saveUserProfile(user).catchError((e) {
+          debugPrint('[AuthRepository] saveUserProfile failed: $e');
+        });
+
+        state = AuthState(status: AuthStatus.authenticated, user: user);
+        await _saveSession(user, AuthStatus.authenticated);
+        _notificationService.startBroadcastListener(userChurchId: user.churchId);
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status:       AuthStatus.unauthenticated,
+        errorMessage: e.toString(),
+        isLoading:    false,
+      );
+    }
+  }
+
+  Future<void> signInWithEmail(String email, String password) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      UserCredential credential;
+      try {
+        credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+      } on FirebaseAuthException catch (authErr) {
+        if (authErr.code == 'user-not-found' || authErr.code == 'invalid-credential') {
+          credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email.trim(),
+            password: password,
+          );
+        } else {
+          rethrow;
+        }
+      }
+
+      final firebaseUser = credential.user;
+      if (firebaseUser != null) {
+        UserModel? profile;
+        try {
+          profile = await _authRepository.getUserProfile(firebaseUser.uid);
+        } catch (_) {}
+
+        final user = profile ?? UserModel(
+          uid:         firebaseUser.uid,
+          displayName: email.split('@')[0],
+          email:       email.trim(),
+          phone:       '',
+          role:        'member',
+        );
+
+        final status = (profile == null || profile.displayName.isEmpty)
+            ? AuthStatus.needsProfileSetup
+            : AuthStatus.authenticated;
+
+        state = AuthState(status: status, user: user);
+        await _saveSession(user, status);
+        _notificationService.startBroadcastListener(userChurchId: user.churchId);
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status:       AuthStatus.unauthenticated,
+        errorMessage: e.toString(),
+        isLoading:    false,
+      );
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      // For demo, authenticate with Google Mock Email
+      const email = 'google_demo_user@demo.com';
+      const password = 'GoogleDemoPassword123!';
+      
+      UserCredential credential;
+      try {
+        credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (authErr) {
+        if (authErr.code == 'user-not-found' || authErr.code == 'invalid-credential') {
+          credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+        } else {
+          rethrow;
+        }
+      }
+
+      final firebaseUser = credential.user;
+      if (firebaseUser != null) {
+        UserModel? profile;
+        try {
+          profile = await _authRepository.getUserProfile(firebaseUser.uid);
+        } catch (_) {}
+
+        final user = profile ?? UserModel(
+          uid:         firebaseUser.uid,
+          displayName: 'Google Demo User',
+          email:       email,
+          phone:       '',
+          role:        'member',
+        );
+
+        final status = (profile == null || profile.displayName.isEmpty)
+            ? AuthStatus.needsProfileSetup
+            : AuthStatus.authenticated;
+
+        state = AuthState(status: status, user: user);
+        await _saveSession(user, status);
+        _notificationService.startBroadcastListener(userChurchId: user.churchId);
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status:       AuthStatus.unauthenticated,
+        errorMessage: e.toString(),
+        isLoading:    false,
+      );
+    }
+  }
+
+  Future<void> signInWithFacebook() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      // For demo, authenticate with Facebook Mock Email
+      const email = 'facebook_demo_user@demo.com';
+      const password = 'FacebookDemoPassword123!';
+      
+      UserCredential credential;
+      try {
+        credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (authErr) {
+        if (authErr.code == 'user-not-found' || authErr.code == 'invalid-credential') {
+          credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+        } else {
+          rethrow;
+        }
+      }
+
+      final firebaseUser = credential.user;
+      if (firebaseUser != null) {
+        UserModel? profile;
+        try {
+          profile = await _authRepository.getUserProfile(firebaseUser.uid);
+        } catch (_) {}
+
+        final user = profile ?? UserModel(
+          uid:         firebaseUser.uid,
+          displayName: 'Facebook Demo User',
+          email:       email,
+          phone:       '',
+          role:        'member',
+        );
+
+        final status = (profile == null || profile.displayName.isEmpty)
+            ? AuthStatus.needsProfileSetup
+            : AuthStatus.authenticated;
+
+        state = AuthState(status: status, user: user);
+        await _saveSession(user, status);
+        _notificationService.startBroadcastListener(userChurchId: user.churchId);
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status:       AuthStatus.unauthenticated,
+        errorMessage: e.toString(),
+        isLoading:    false,
+      );
     }
   }
 

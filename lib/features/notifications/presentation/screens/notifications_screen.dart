@@ -1,78 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:church/app/theme.dart';
+import 'package:church/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church/l10n/app_localizations.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _stagger;
-  late final List<Animation<double>> _fades;
-  late final List<Animation<Offset>> _slides;
-
-  static final _items = [
-    _NotifyItem(
-      title: 'Monthly Asrat Reminder (የወርሃዊ አስራት ማሳሰቢያ)',
-      body: 'Blessed member, this is a reminder to pay your monthly Asrat (Tithe) contribution.',
-      date: 'Today',
-      icon: Icons.notifications_active_rounded,
-      color: AppTheme.primaryGold,
-      isUnread: true,
-    ),
-    _NotifyItem(
-      title: 'Fasting Period Announcement (የአዋጅ ጾም ማስታወቂያ)',
-      body: 'The Assumption Fast (Filseta) begins soon. Let us prepare our hearts for prayers.',
-      date: '2 days ago',
-      icon: Icons.church_rounded,
-      color: AppTheme.primaryBlue,
-      isUnread: false,
-    ),
-    _NotifyItem(
-      title: 'Building Fund Campaign (የህንፃ መገንቢያ ማሰባሰቢያ)',
-      body: 'Our church reconstruction project is underway. Your contribution is highly appreciated.',
-      date: '1 week ago',
-      icon: Icons.campaign_rounded,
-      color: Colors.green,
-      isUnread: false,
-    ),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _stagger = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..forward();
-
-    _fades = List.generate(_items.length, (i) {
-      final s = i * 0.14;
-      return Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _stagger, curve: Interval(s, (s + 0.4).clamp(0, 1.0), curve: Curves.easeOut)),
-      );
-    });
-    _slides = List.generate(_items.length, (i) {
-      final s = i * 0.14;
-      return Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
-        CurvedAnimation(parent: _stagger, curve: Interval(s, (s + 0.5).clamp(0, 1.0), curve: Curves.easeOutCubic)),
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _stagger.dispose();
-    super.dispose();
-  }
-
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final userChurchId = ref.watch(authStateProvider).user?.churchId;
 
     return Scaffold(
       appBar: AppBar(
@@ -85,19 +29,100 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           ),
         ],
       ),
-      body: AnimatedBuilder(
-        animation: _stagger,
-        builder: (context, _) => ListView.builder(
-          padding: const EdgeInsets.all(20),
-          itemCount: _items.length,
-          itemBuilder: (context, i) => FadeTransition(
-            opacity: _fades[i],
-            child: SlideTransition(
-              position: _slides[i],
-              child: _NotificationCard(item: _items[i]),
-            ),
-          ),
-        ),
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('notifications')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.lock_clock_rounded, size: 64, color: Colors.orange),
+                    SizedBox(height: 16),
+                    Text(
+                      'Broadcast Stream Initializing',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Live push notifications will connect when authenticated by your Diocese or Parish Admin.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          List<_NotifyItem> items = [];
+
+          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+            for (final doc in snapshot.data!.docs) {
+              final data = doc.data();
+              final targetType = data['targetType'];
+              final targetId = data['targetId'];
+
+              // Filter notifications for all or matching church
+              if (targetType == 'all' || (targetType == 'church' && targetId == userChurchId)) {
+                final ts = (data['createdAt'] as Timestamp?)?.toDate();
+                final timeStr = ts != null
+                    ? '${ts.day}/${ts.month} ${ts.hour.toString().padLeft(2, '0')}:${ts.minute.toString().padLeft(2, '0')}'
+                    : 'Just now';
+
+                items.add(_NotifyItem(
+                  id: doc.id,
+                  title: data['title'] ?? '📢 Announcement',
+                  body: data['body'] ?? '',
+                  date: timeStr,
+                  icon: Icons.campaign_rounded,
+                  color: AppTheme.primaryBlue,
+                  isUnread: true,
+                ));
+              }
+            }
+          }
+
+          if (items.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.notifications_none_rounded, size: 64, color: AppTheme.primaryGold),
+                    SizedBox(height: 16),
+                    Text(
+                      'No Broadcast Announcements',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Broadcast notifications sent from your Diocese or Parish Admin will appear here in real-time.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: items.length,
+            itemBuilder: (context, i) => _NotificationCard(item: items[i]),
+          );
+        },
       ),
     );
   }
@@ -242,12 +267,14 @@ class _NotificationCardState extends State<_NotificationCard>
 }
 
 class _NotifyItem {
+  final String? id;
   final String title, body, date;
   final IconData icon;
   final Color color;
   final bool isUnread;
 
   const _NotifyItem({
+    this.id,
     required this.title,
     required this.body,
     required this.date,

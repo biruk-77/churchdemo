@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:church/app/theme.dart';
 import 'package:church/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church/features/church/presentation/screens/church_selection_screen.dart';
@@ -164,9 +165,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
               FadeTransition(
                 opacity: _headerFade,
-                child: Text(
-                  _churchName.isNotEmpty ? _churchName : l10n.appName,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                child: GestureDetector(
+                  onTap: () async {
+                    await context.push('/church-select');
+                    _loadChurchName();
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _churchName.isNotEmpty ? _churchName : l10n.appName,
+                        style: const TextStyle(fontSize: 13, color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGold.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.4), width: 0.8),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.swap_horiz_rounded, size: 12, color: AppTheme.primaryGold),
+                            SizedBox(width: 2),
+                            Text('Change', style: TextStyle(fontSize: 10, color: AppTheme.primaryGold, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 

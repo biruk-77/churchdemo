@@ -30,6 +30,7 @@ class ChurchSelectionScreen extends ConsumerStatefulWidget {
 class _ChurchSelectionScreenState extends ConsumerState<ChurchSelectionScreen>
     with SingleTickerProviderStateMixin {
   String _searchQuery = '';
+  String? _selectedDiocese;
   ChurchModel? _selectedChurch;
 
   late final AnimationController _entrance;
@@ -94,28 +95,56 @@ class _ChurchSelectionScreenState extends ConsumerState<ChurchSelectionScreen>
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.selectChurch), elevation: 0),
+      appBar: AppBar(
+        title: Text(_selectedDiocese == null ? 'Select Diocese (ሀገረ ስብከት)' : l10n.selectChurch),
+        elevation: 0,
+        actions: [
+          if (_selectedDiocese != null)
+            TextButton.icon(
+              onPressed: () => setState(() {
+                _selectedDiocese = null;
+                _selectedChurch = null;
+              }),
+              icon: const Icon(Icons.swap_horiz_rounded, size: 18, color: AppTheme.primaryGold),
+              label: const Text('Change Diocese', style: TextStyle(color: AppTheme.primaryGold, fontSize: 12)),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Animated header
               FadeTransition(
                 opacity: _headerFade,
                 child: SlideTransition(
                   position: _headerSlide,
-                  child: Text(
-                    l10n.selectChurch,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _selectedDiocese == null
+                            ? 'Step 1: Select Diocese (ሀገረ ስብከት)'
+                            : 'Step 2: Select Parish in $_selectedDiocese',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedDiocese == null
+                            ? 'Choose your regional archdiocese first to view local churches.'
+                            : 'Tap on your home church or monastery to join.',
+                        style: TextStyle(fontSize: 13, color: Colors.black.withValues(alpha: 0.5)),
+                      ),
+                    ],
                   ),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // Animated search bar
               FadeTransition(
@@ -123,7 +152,7 @@ class _ChurchSelectionScreenState extends ConsumerState<ChurchSelectionScreen>
                 child: TextField(
                   onChanged: (v) => setState(() => _searchQuery = v),
                   decoration: InputDecoration(
-                    hintText: l10n.searchChurch,
+                    hintText: _selectedDiocese == null ? 'Search Diocese (e.g. Hawassa, Addis Ababa)' : l10n.searchChurch,
                     prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryBlue),
                     filled: true,
                     fillColor: AppTheme.primaryBlue.withValues(alpha: 0.04),
@@ -141,52 +170,110 @@ class _ChurchSelectionScreenState extends ConsumerState<ChurchSelectionScreen>
 
               const SizedBox(height: 16),
 
-              // Church list
+              // Content List (Dioceses list in Step 1, Churches list in Step 2)
               Expanded(
                 child: churchesAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text(l10n.error)),
                   data: (churches) {
-                    final filtered = churches.where((c) {
-                      final q = _searchQuery.toLowerCase();
-                      return c.name.toLowerCase().contains(q) ||
-                          c.location.toLowerCase().contains(q) ||
-                          c.diocese.toLowerCase().contains(q);
-                    }).toList();
+                    if (_selectedDiocese == null) {
+                      // ── STEP 1: Show Unique Dioceses ──────────────────────
+                      final allDioceses = churches.map((c) => c.diocese).toSet().toList();
+                      final filteredDioceses = allDioceses.where((d) {
+                        final q = _searchQuery.toLowerCase();
+                        return d.toLowerCase().contains(q);
+                      }).toList();
 
-                    if (filtered.isEmpty) {
-                      return Center(
-                        child: Text('No matching churches found', style: TextStyle(color: Colors.black.withValues(alpha: 0.4))),
+                      if (filteredDioceses.isEmpty) {
+                        return Center(
+                          child: Text('No matching diocese found', style: TextStyle(color: Colors.black.withValues(alpha: 0.4))),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: filteredDioceses.length,
+                        itemBuilder: (context, i) {
+                          final dio = filteredDioceses[i];
+                          final count = churches.where((c) => c.diocese == dio).length;
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.12)),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              clipBehavior: Clip.antiAlias,
+                              child: ListTile(
+                                leading: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryGold.withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.account_balance_rounded, color: AppTheme.primaryGold, size: 22),
+                                ),
+                                title: Text(dio, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                                subtitle: Text('$count Parish Churches & Monasteries', style: const TextStyle(fontSize: 12)),
+                                trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.primaryBlue),
+                                onTap: () => setState(() {
+                                  _selectedDiocese = dio;
+                                  _searchQuery = '';
+                                }),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      // ── STEP 2: Show Churches inside selected Diocese ────
+                      final dioceseChurches = churches.where((c) => c.diocese == _selectedDiocese).toList();
+                      final filtered = dioceseChurches.where((c) {
+                        final q = _searchQuery.toLowerCase();
+                        return c.name.toLowerCase().contains(q) || c.location.toLowerCase().contains(q);
+                      }).toList();
+
+                      if (filtered.isEmpty) {
+                        return Center(
+                          child: Text('No churches match in $_selectedDiocese', style: TextStyle(color: Colors.black.withValues(alpha: 0.4))),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (context, i) {
+                          final church = filtered[i];
+                          final isSelected = _selectedChurch?.id == church.id;
+                          return _AnimatedChurchCard(
+                            church: church,
+                            isSelected: isSelected,
+                            index: i,
+                            l10n: l10n,
+                            onTap: () => _onChurchTapped(church),
+                          );
+                        },
                       );
                     }
-
-                    return ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (context, i) {
-                        final church = filtered[i];
-                        final isSelected = _selectedChurch?.id == church.id;
-                        return _AnimatedChurchCard(
-                          church: church,
-                          isSelected: isSelected,
-                          index: i,
-                          l10n: l10n,
-                          onTap: () => _onChurchTapped(church),
-                        );
-                      },
-                    );
                   },
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // Join button — pulses when a church is selected
-              _PulsingJoinButton(
-                label: l10n.joinChurch,
-                isLoading: authState.isLoading,
-                isActive: _selectedChurch != null,
-                onPressed: _selectedChurch == null ? null : _onJoinPressed,
-              ),
+              // Join button — visible in Step 2 when a church is selected
+              if (_selectedDiocese != null)
+                _PulsingJoinButton(
+                  label: l10n.joinChurch,
+                  isLoading: authState.isLoading,
+                  isActive: _selectedChurch != null,
+                  onPressed: _selectedChurch == null ? null : _onJoinPressed,
+                ),
 
               const SizedBox(height: 20),
             ],
@@ -268,33 +355,38 @@ class _AnimatedChurchCardState extends State<_AnimatedChurchCard>
                   ? [BoxShadow(color: AppTheme.primaryGold.withValues(alpha: 0.2), blurRadius: 14, offset: const Offset(0, 4))]
                   : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
             ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              leading: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: widget.isSelected ? 0.18 : 0.1),
-                  shape: BoxShape.circle,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                leading: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: widget.isSelected ? 0.18 : 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    church.isMonastery ? Icons.castle_rounded : Icons.church_rounded,
+                    color: iconColor,
+                    size: 22,
+                  ),
                 ),
-                child: Icon(
-                  church.isMonastery ? Icons.castle_rounded : Icons.church_rounded,
-                  color: iconColor,
-                  size: 22,
+                title: Text(church.name, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isSelected ? AppTheme.primaryBlue : Colors.black87)),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${widget.l10n.location}: ${church.location}', style: const TextStyle(fontSize: 12)),
+                    Text('${widget.l10n.diocese}: ${church.diocese}', style: const TextStyle(fontSize: 12)),
+                  ],
                 ),
-              ),
-              title: Text(church.name, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isSelected ? AppTheme.primaryBlue : Colors.black87)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${widget.l10n.location}: ${church.location}', style: const TextStyle(fontSize: 12)),
-                  Text('${widget.l10n.diocese}: ${church.diocese}', style: const TextStyle(fontSize: 12)),
-                ],
-              ),
-              trailing: AnimatedOpacity(
-                opacity: widget.isSelected ? 1 : 0,
-                duration: const Duration(milliseconds: 250),
-                child: const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGold, size: 22),
+                trailing: AnimatedOpacity(
+                  opacity: widget.isSelected ? 1 : 0,
+                  duration: const Duration(milliseconds: 250),
+                  child: const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGold, size: 22),
+                ),
               ),
             ),
           ),

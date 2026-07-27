@@ -166,7 +166,10 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                               const _Dashed(),
                               _PrintRow(
                                 label: 'Transaction ID',
-                                value: widget.txId.substring(0, 12).toUpperCase(),
+                                value: (widget.txId.length > 12
+                                        ? widget.txId.substring(0, 12)
+                                        : widget.txId)
+                                    .toUpperCase(),
                                 delay: _rowDelays[1],
                               ),
                               const _Dashed(),
