@@ -46,7 +46,7 @@ class _EthiopianCrossDividerState extends State<EthiopianCrossDivider>
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = widget.color ?? AppTheme.primaryGold;
+    final dividerColor = widget.color ?? AppTheme.imperialGold;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),

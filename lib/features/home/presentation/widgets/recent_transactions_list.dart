@@ -135,7 +135,7 @@ class _TxRowState extends State<_TxRow> with SingleTickerProviderStateMixin {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.12)),
+        border: Border.all(color: AppTheme.imperialGold.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -150,10 +150,10 @@ class _TxRowState extends State<_TxRow> with SingleTickerProviderStateMixin {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppTheme.primaryGold.withValues(alpha: 0.1),
+            color: AppTheme.imperialGold.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryGold, size: 20),
+          child: const Icon(Icons.receipt_long_rounded, color: AppTheme.imperialGold, size: 20),
         ),
         title: Text(widget.label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         subtitle: Text(
@@ -171,7 +171,7 @@ class _TxRowState extends State<_TxRow> with SingleTickerProviderStateMixin {
               duration: Duration(milliseconds: 900 + widget.index * 100),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlue,
+                color: AppTheme.royalEmerald,
                 fontSize: 13,
               ),
             ),

@@ -168,7 +168,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? AppTheme.primaryBlue : Colors.black54,
+              color: isSelected ? AppTheme.royalEmerald : Colors.black54,
             ),
           ),
         ),
@@ -200,20 +200,20 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
       isLoading: authState.isLoading,
       message: l10n.sendOtp,
       child: Scaffold(
-        backgroundColor: AppTheme.primaryBlue,
+        backgroundColor: AppTheme.royalEmerald,
         body: Stack(
           children: [
-            // Gold dust particles on the dark background
+            // White & mint particles on emerald background
             const Positioned.fill(
               child: ParticleField(
                 count: 30,
-                colors: [Color(0x55C9A227), Color(0x33FFD700)],
+                colors: [Color(0x44FFFFFF), Color(0x3381C784)],
               ),
             ),
 
             Column(
               children: [
-                // ── HEADER (dark blue, 42% of screen) ─────────────────────
+                // ── HEADER (42% of screen) ─────────────────────
                 SizedBox(
                   height: size.height * 0.42,
                   child: SafeArea(
@@ -223,7 +223,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Cross icon
+                          // Cross / Church logo icon
                           FadeTransition(
                             opacity: _headerFades[0],
                             child: SlideTransition(
@@ -233,17 +233,17 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                 height: 76,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppTheme.primaryGold.withValues(alpha: 0.15),
-                                  border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.5), width: 1.5),
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.white, width: 2),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.primaryGold.withValues(alpha: 0.25),
+                                      color: Colors.black.withValues(alpha: 0.15),
                                       blurRadius: 20,
                                       spreadRadius: 2,
                                     ),
                                   ],
                                 ),
-                                child: const Icon(Icons.church_rounded, color: AppTheme.primaryGold, size: 36),
+                                child: const Icon(Icons.church_rounded, color: AppTheme.royalEmerald, size: 38),
                               ),
                             ),
                           ),
@@ -358,7 +358,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                           style: const TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
-                                            color: AppTheme.primaryBlue,
+                                            color: AppTheme.royalEmerald,
                                             letterSpacing: 0.2,
                                           ),
                                         ),
@@ -373,7 +373,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                               margin: const EdgeInsets.only(right: 1),
                                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                               decoration: BoxDecoration(
-                                                color: AppTheme.primaryBlue.withValues(alpha: 0.07),
+                                                color: AppTheme.royalEmerald.withValues(alpha: 0.07),
                                                 borderRadius: const BorderRadius.only(
                                                   topLeft: Radius.circular(14),
                                                   bottomLeft: Radius.circular(14),
@@ -389,7 +389,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                                     style: TextStyle(
                                                       fontSize: 15,
                                                       fontWeight: FontWeight.bold,
-                                                      color: AppTheme.primaryBlue,
+                                                      color: AppTheme.royalEmerald,
                                                     ),
                                                   ),
                                                 ],
@@ -416,11 +416,11 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Full Name',
+                                            'ሙሉ ስም',
                                             style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryBlue,
+                                              color: AppTheme.royalEmerald,
                                               letterSpacing: 0.2,
                                             ),
                                           ),
@@ -430,13 +430,13 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                             keyboardType: TextInputType.name,
                                             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                                             decoration: InputDecoration(
-                                              hintText: 'Enter your full name',
-                                              prefixIcon: const Icon(Icons.person_outline, color: AppTheme.primaryBlue),
+                                              hintText: 'ሙሉ ስምዎን ያስገቡ',
+                                              prefixIcon: const Icon(Icons.person_outline, color: AppTheme.royalEmerald),
                                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                                             ),
                                             validator: (value) {
                                               if (_authView != AuthView.signUp) return null;
-                                              if (value == null || value.trim().isEmpty) return 'Full name is required';
+                                              if (value == null || value.trim().isEmpty) return 'ሙሉ ስም ያስፈልጋል';
                                               return null;
                                             },
                                           ),
@@ -450,11 +450,11 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'Email Address',
+                                          'የኢሜይል አድራሻ',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
-                                            color: AppTheme.primaryBlue,
+                                            color: AppTheme.royalEmerald,
                                             letterSpacing: 0.2,
                                           ),
                                         ),
@@ -464,14 +464,14 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                           keyboardType: TextInputType.emailAddress,
                                           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                                           decoration: InputDecoration(
-                                            hintText: 'Enter your email address',
-                                            prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.primaryBlue),
+                                            hintText: 'የኢሜይል አድራሻዎን ያስገቡ',
+                                            prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.royalEmerald),
                                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                                           ),
                                           validator: (value) {
                                             if (_authView == AuthView.phone) return null;
-                                            if (value == null || value.trim().isEmpty) return 'Email is required';
-                                            if (!value.contains('@') || !value.contains('.')) return 'Enter a valid email address';
+                                            if (value == null || value.trim().isEmpty) return 'ኢሜይል ያስፈልጋል';
+                                            if (!value.contains('@') || !value.contains('.')) return 'ትክክለኛ ኢሜይል አድራሻ ያስገቡ';
                                             return null;
                                           },
                                         ),
@@ -484,11 +484,11 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'Password',
+                                          'የይለፍ ቃል',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
-                                            color: AppTheme.primaryBlue,
+                                            color: AppTheme.royalEmerald,
                                             letterSpacing: 0.2,
                                           ),
                                         ),
@@ -498,14 +498,14 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                           obscureText: true,
                                           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                                           decoration: InputDecoration(
-                                            hintText: 'Enter your password',
-                                            prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryBlue),
+                                            hintText: 'የይለፍ ቃልዎን ያስገቡ',
+                                            prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.royalEmerald),
                                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                                           ),
                                           validator: (value) {
                                             if (_authView == AuthView.phone) return null;
-                                            if (value == null || value.isEmpty) return 'Password is required';
-                                            if (value.length < 6) return 'Password must be at least 6 characters';
+                                            if (value == null || value.isEmpty) return 'የይለፍ ቃል ያስፈልጋል';
+                                            if (value.length < 6) return 'የይለፍ ቃል ቢያንስ 6 ፊደላት ሊኖረው ይገባል';
                                             return null;
                                           },
                                         ),
@@ -521,7 +521,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                         : _authView == AuthView.signIn
                                             ? 'Sign In'
                                             : l10n.sendOtp,
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.royalEmerald,
                                     onPressed: _submit,
                                   ),
 
@@ -543,7 +543,7 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen>
                                               ? "Don't have an account? Sign Up"
                                               : "Already have an account? Sign In",
                                           style: const TextStyle(
-                                            color: AppTheme.primaryGold,
+                                            color: AppTheme.imperialGold,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),

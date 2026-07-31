@@ -69,7 +69,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             const SizedBox(height: 20),
             Text(
               l10n.transactionHistory,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.royalEmerald),
             ),
             const EthiopianCrossDivider(height: 30),
             Expanded(
@@ -179,7 +179,7 @@ class _TxCardState extends State<_TxCard> with SingleTickerProviderStateMixin {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.15)),
+            border: Border.all(color: AppTheme.imperialGold.withValues(alpha: 0.15)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -196,10 +196,10 @@ class _TxCardState extends State<_TxCard> with SingleTickerProviderStateMixin {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGold.withValues(alpha: 0.1),
+                  color: AppTheme.imperialGold.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryGold, size: 22),
+                child: const Icon(Icons.receipt_long_rounded, color: AppTheme.imperialGold, size: 22),
               ),
             ),
             title: Text(widget.label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -213,7 +213,7 @@ class _TxCardState extends State<_TxCard> with SingleTickerProviderStateMixin {
               children: [
                 Text(
                   widget.formatted,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 13),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.royalEmerald, fontSize: 13),
                 ),
                 const Icon(Icons.chevron_right, size: 16, color: Colors.black26),
               ],

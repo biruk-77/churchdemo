@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primaryGold = Color(0xFFC9A227);
-  static const Color primaryGoldLight = Color(0xFFE8C84A);
-  static const Color primaryGoldDark = Color(0xFF9C7A1A);
+  static const Color primaryGold = Color(0xFF006A4E);
+  static const Color primaryGoldLight = Color(0xFF008763);
+  static const Color primaryGoldDark = Color(0xFF004D38);
   static const Color orthodoxBlue = Color(0xFF1A237E);
   static const Color orthodoxBlueLight = Color(0xFF3949AB);
   static const Color orthodoxBlueDark = Color(0xFF0D1257);

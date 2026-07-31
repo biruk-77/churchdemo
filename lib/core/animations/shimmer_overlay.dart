@@ -45,7 +45,7 @@ class _HolographicShimmerState extends State<HolographicShimmer>
             end: Alignment(-1.0 + t * 6, 0.5),
             colors: const [
               Colors.transparent,
-              Color(0x44FFD700),
+              Color(0x44006A4E),
               Color(0x33FFFFFF),
               Colors.transparent,
             ],
@@ -68,7 +68,7 @@ class AnimatedWaveBackground extends StatefulWidget {
 
   const AnimatedWaveBackground({
     super.key,
-    this.color = AppTheme.primaryBlue,
+    this.color = AppTheme.royalEmerald,
     this.height = 100,
     this.amplitude = 10,
   });
@@ -161,7 +161,7 @@ class SpinningRing extends StatefulWidget {
     super.key,
     required this.child,
     this.size = 72,
-    this.color = AppTheme.primaryGold,
+    this.color = AppTheme.imperialGold,
     this.period = const Duration(seconds: 7),
   });
 

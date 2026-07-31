@@ -22,7 +22,6 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen>
   @override
   void initState() {
     super.initState();
-    // 16 cards × 50ms stagger + 500ms per card = 1300ms total
     _stagger = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -63,7 +62,7 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen>
             const SizedBox(height: 16),
             Text(
               l10n.selectContributionType,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.royalEmerald),
             ),
             const SizedBox(height: 14),
             Expanded(
@@ -96,22 +95,22 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen>
   }
 
   List<_Item> _buildItems(AppLocalizations l10n) => [
-        _Item(l10n.asrat, Icons.percent, AppTheme.primaryGold, 'asrat'),
-        _Item(l10n.bekuart, Icons.card_giftcard, AppTheme.primaryBlue, 'bekuart'),
-        _Item(l10n.monthly, Icons.calendar_month, Colors.teal, 'monthly'),
-        _Item(l10n.buildingFund, Icons.build_circle, Colors.indigo, 'buildingFund'),
-        _Item(l10n.charity, Icons.favorite, Colors.red, 'charity'),
-        _Item(l10n.festival, Icons.celebration, Colors.orange, 'festival'),
-        _Item(l10n.candle, Icons.light, Colors.amber, 'candle'),
-        _Item(l10n.memorial, Icons.history, Colors.grey, 'memorial'),
-        _Item(l10n.monastery, Icons.castle, Colors.deepOrange, 'monastery'),
-        _Item(l10n.priest, Icons.person_pin, Colors.brown, 'priest'),
-        _Item(l10n.sundaySchool, Icons.school, Colors.green, 'sundaySchool'),
-        _Item(l10n.youth, Icons.groups, Colors.blue, 'youth'),
-        _Item(l10n.women, Icons.woman, Colors.pink, 'women'),
-        _Item(l10n.development, Icons.developer_mode, Colors.cyan, 'development'),
-        _Item(l10n.emergency, Icons.warning_amber, Colors.redAccent, 'emergency'),
-        _Item(l10n.specialCollection, Icons.stars_rounded, Colors.purple, 'specialCollection'),
+        _Item(l10n.asrat, Icons.percent, AppTheme.royalEmerald, 'asrat'),
+        _Item(l10n.bekuart, Icons.card_giftcard, AppTheme.royalEmerald, 'bekuart'),
+        _Item(l10n.monthly, Icons.calendar_month, AppTheme.royalEmerald, 'monthly'),
+        _Item(l10n.buildingFund, Icons.build_circle, AppTheme.royalEmerald, 'buildingFund'),
+        _Item(l10n.charity, Icons.favorite, AppTheme.royalEmerald, 'charity'),
+        _Item(l10n.festival, Icons.celebration, AppTheme.royalEmerald, 'festival'),
+        _Item(l10n.candle, Icons.light, AppTheme.royalEmerald, 'candle'),
+        _Item(l10n.memorial, Icons.history, AppTheme.royalEmerald, 'memorial'),
+        _Item(l10n.monastery, Icons.castle, AppTheme.royalEmerald, 'monastery'),
+        _Item(l10n.priest, Icons.person_pin, AppTheme.royalEmerald, 'priest'),
+        _Item(l10n.sundaySchool, Icons.school, AppTheme.royalEmerald, 'sundaySchool'),
+        _Item(l10n.youth, Icons.groups, AppTheme.royalEmerald, 'youth'),
+        _Item(l10n.women, Icons.woman, AppTheme.royalEmerald, 'women'),
+        _Item(l10n.development, Icons.developer_mode, AppTheme.royalEmerald, 'development'),
+        _Item(l10n.emergency, Icons.warning_amber, AppTheme.royalEmerald, 'emergency'),
+        _Item(l10n.specialCollection, Icons.stars_rounded, AppTheme.royalEmerald, 'specialCollection'),
       ];
 }
 
@@ -154,17 +153,13 @@ class _ContributeCardState extends State<_ContributeCard>
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
+            color: const Color(0xFFF0F7F4), // Smooth constant green-tinted card background
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, item.color.withValues(alpha: 0.07)],
-            ),
-            border: Border.all(color: item.color.withValues(alpha: 0.22), width: 1.2),
+            border: Border.all(color: AppTheme.royalEmerald.withValues(alpha: 0.18), width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: item.color.withValues(alpha: 0.12),
-                blurRadius: 12,
+                color: AppTheme.royalEmerald.withValues(alpha: 0.08),
+                blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -176,17 +171,21 @@ class _ContributeCardState extends State<_ContributeCard>
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: item.color.withValues(alpha: 0.12),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(item.icon, color: item.color, size: 22),
+                child: Icon(item.icon, color: AppTheme.royalEmerald, size: 22),
               ),
               Text(
                 item.label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: AppTheme.royalEmerald,
+                ),
               ),
             ],
           ),

@@ -121,7 +121,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     final defaultPinTheme = PinTheme(
       width: 52,
       height: 58,
-      textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+      textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.royalEmerald),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -165,9 +165,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                         height: 72,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                          color: AppTheme.royalEmerald.withValues(alpha: 0.08),
                         ),
-                        child: const Icon(Icons.sms_rounded, color: AppTheme.primaryBlue, size: 36),
+                        child: const Icon(Icons.sms_rounded, color: AppTheme.royalEmerald, size: 36),
                       ),
                     ),
 
@@ -197,10 +197,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                           defaultPinTheme: defaultPinTheme,
                           focusedPinTheme: defaultPinTheme.copyWith(
                             decoration: defaultPinTheme.decoration!.copyWith(
-                              border: Border.all(color: AppTheme.primaryGold, width: 2.5),
+                              border: Border.all(color: AppTheme.imperialGold, width: 2.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primaryGold.withValues(alpha: 0.25),
+                                  color: AppTheme.imperialGold.withValues(alpha: 0.25),
                                   blurRadius: 12,
                                 ),
                               ],
@@ -208,8 +208,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                           ),
                           submittedPinTheme: defaultPinTheme.copyWith(
                             decoration: defaultPinTheme.decoration!.copyWith(
-                              color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-                              border: Border.all(color: AppTheme.primaryBlue, width: 1.5),
+                              color: AppTheme.royalEmerald.withValues(alpha: 0.08),
+                              border: Border.all(color: AppTheme.royalEmerald, width: 1.5),
                             ),
                           ),
                           onCompleted: _verify,
@@ -239,7 +239,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.royalEmerald,
                                   ),
                                 ),
                               ],
@@ -252,7 +252,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                               child: Text(
                                 l10n.resendOtp,
                                 style: const TextStyle(
-                                  color: AppTheme.primaryGold,
+                                  color: AppTheme.imperialGold,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -296,7 +296,7 @@ class _CountdownRingPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4
-        ..color = AppTheme.primaryGold.withValues(alpha: 0.15),
+        ..color = AppTheme.imperialGold.withValues(alpha: 0.15),
     );
 
     canvas.drawArc(
@@ -308,7 +308,7 @@ class _CountdownRingPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4
         ..strokeCap = StrokeCap.round
-        ..color = AppTheme.primaryGold,
+        ..color = AppTheme.imperialGold,
     );
   }
 

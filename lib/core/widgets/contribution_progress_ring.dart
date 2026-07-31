@@ -72,7 +72,7 @@ class _ContributionProgressRingState extends State<ContributionProgressRing>
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlue,
+                    color: AppTheme.royalEmerald,
                   ),
                 ),
                 Text(
@@ -110,7 +110,7 @@ class _ProgressRingPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 10
-        ..color = AppTheme.primaryGold.withValues(alpha: 0.1),
+        ..color = AppTheme.imperialGold.withValues(alpha: 0.1),
     );
 
     if (progress > 0) {
@@ -124,7 +124,7 @@ class _ProgressRingPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 16
           ..strokeCap = StrokeCap.round
-          ..color = AppTheme.primaryGold.withValues(alpha: 0.18 * glowIntensity)
+          ..color = AppTheme.imperialGold.withValues(alpha: 0.18 * glowIntensity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
 
@@ -142,7 +142,7 @@ class _ProgressRingPainter extends CustomPainter {
             center: Alignment.center,
             startAngle: -math.pi / 2,
             endAngle: -math.pi / 2 + sweepAngle,
-            colors: const [Color(0xFFC9A227), Color(0xFFFFD700), Color(0xFFE6B800)],
+            colors: const [Color(0xFF004D38), Color(0xFF006A4E), Color(0xFF00A877)],
           ).createShader(rect),
       );
 
@@ -155,7 +155,7 @@ class _ProgressRingPainter extends CustomPainter {
         Offset(tx, ty),
         8,
         Paint()
-          ..color = AppTheme.primaryGold.withValues(alpha: 0.4 * glowIntensity)
+          ..color = AppTheme.imperialGold.withValues(alpha: 0.4 * glowIntensity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
       );
       canvas.drawCircle(
@@ -166,7 +166,7 @@ class _ProgressRingPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(tx, ty),
         2.5,
-        Paint()..color = AppTheme.primaryGold,
+        Paint()..color = AppTheme.imperialGold,
       );
     }
 
@@ -179,7 +179,7 @@ class _ProgressRingPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(mx, my),
         5,
-        Paint()..color = achieved ? AppTheme.primaryBlue : Colors.grey.withValues(alpha: 0.25),
+        Paint()..color = achieved ? AppTheme.royalEmerald : Colors.grey.withValues(alpha: 0.25),
       );
       if (achieved) {
         canvas.drawCircle(

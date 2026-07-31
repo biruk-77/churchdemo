@@ -100,7 +100,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
               builder: (_, _) => CustomPaint(
                 painter: RadialRaysPainter(
                   progress: _burstController.value,
-                  color: AppTheme.primaryGold,
+                  color: AppTheme.imperialGold,
                 ),
               ),
             ),
@@ -170,11 +170,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                           borderRadius: BorderRadius.circular(20),
                           color: Colors.white,
                           border: Border.all(
-                            color: AppTheme.primaryGold.withValues(alpha: 0.25),
+                            color: AppTheme.imperialGold.withValues(alpha: 0.25),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primaryGold.withValues(alpha: 0.10),
+                              color: AppTheme.imperialGold.withValues(alpha: 0.10),
                               blurRadius: 20,
                               offset: const Offset(0, 6),
                             ),
@@ -191,7 +191,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
                               valueStyle: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
-                                color: AppTheme.primaryBlue,
+                                color: AppTheme.royalEmerald,
                               ),
                             ),
                             _buildDivider(),
@@ -232,7 +232,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
 
   Widget _buildDivider() => Divider(
         height: 22,
-        color: AppTheme.primaryGold.withValues(alpha: 0.15),
+        color: AppTheme.imperialGold.withValues(alpha: 0.15),
       );
 
   Widget _buildRow(String label, String value, {TextStyle? valueStyle}) {
@@ -251,7 +251,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
           style: valueStyle ??
               const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlue,
+                color: AppTheme.royalEmerald,
               ),
         ),
       ],

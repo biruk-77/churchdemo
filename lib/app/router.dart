@@ -7,15 +7,22 @@ import 'package:church/features/auth/presentation/screens/phone_auth_screen.dart
 import 'package:church/features/auth/presentation/screens/otp_screen.dart';
 import 'package:church/features/auth/presentation/screens/profile_setup_screen.dart';
 import 'package:church/features/church/presentation/screens/church_selection_screen.dart';
+import 'package:church/features/church/presentation/screens/diocese_selection_screen.dart';
+import 'package:church/features/church/presentation/screens/woreda_selection_screen.dart';
+import 'package:church/features/church/presentation/screens/beautiful_church_selection_screen.dart';
 import 'package:church/features/home/presentation/screens/home_screen.dart';
 import 'package:church/features/contributions/presentation/screens/contribute_screen.dart';
 import 'package:church/features/contributions/presentation/screens/amount_entry_screen.dart';
+import 'package:church/features/contributions/presentation/screens/contribution_types_screen.dart';
 import 'package:church/features/payment/presentation/screens/payment_method_screen.dart';
 import 'package:church/features/payment/presentation/screens/payment_success_screen.dart';
 import 'package:church/features/history/presentation/screens/history_screen.dart';
 import 'package:church/features/history/presentation/screens/receipt_screen.dart';
 import 'package:church/features/profile/presentation/screens/profile_screen.dart';
 import 'package:church/features/notifications/presentation/screens/notifications_screen.dart';
+
+import 'package:church/features/contributions/presentation/screens/category_detail_screen.dart';
+import 'package:church/features/contributions/presentation/screens/funds_screen.dart';
 
 // ── Transition helpers ────────────────────────────────────────────────────────
 
@@ -119,12 +126,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (status == AuthStatus.needsProfileSetup) return '/auth/setup';
 
       if (status == AuthStatus.authenticated) {
-        const noChurchGate = ['/payment/success', '/payment/method', '/church-select'];
+        const noChurchGate = ['/payment/success', '/payment/method', '/church-select', '/diocese-selection', '/woreda-selection', '/church-selection'];
         final loc = state.matchedLocation;
         if (authState.user?.churchId == null && !noChurchGate.any(loc.startsWith)) {
-          return '/church-select';
+          return '/diocese-selection';
         }
-        if (isAuthPath || (loc == '/church-select' && authState.user?.churchId != null)) {
+        if (isAuthPath || (loc.startsWith('/diocese-selection') || loc.startsWith('/church-selection') || loc.startsWith('/woreda-selection')) && authState.user?.churchId != null) {
           return '/home';
         }
       }
@@ -157,8 +164,51 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _slideUp(state, const ChurchSelectionScreen()),
       ),
       GoRoute(
+        path: '/diocese-selection',
+        pageBuilder: (context, state) => _slideUp(state, const DioceseSelectionScreen()),
+      ),
+      GoRoute(
+        path: '/woreda-selection/:dioceseId',
+        pageBuilder: (context, state) {
+          final dioceseId = state.pathParameters['dioceseId'] ?? '';
+          return _slideUp(state, WoredaSelectionScreen(dioceseId: dioceseId));
+        },
+      ),
+      GoRoute(
+        path: '/church-selection/:dioceseId/:woredaId',
+        pageBuilder: (context, state) {
+          final dioceseId = state.pathParameters['dioceseId'] ?? '';
+          final woredaId = state.pathParameters['woredaId'] ?? '';
+          return _slideUp(
+            state,
+            BeautifulChurchSelectionScreen(
+              dioceseId: dioceseId,
+              woredaId: woredaId,
+            ),
+          );
+        },
+      ),
+      GoRoute(
         path: '/home',
         pageBuilder: (context, state) => _fadeScale(state, const HomeScreen()),
+      ),
+      GoRoute(
+        path: '/contribute-types',
+        pageBuilder: (context, state) => _slideUp(state, const ContributionTypesScreen()),
+      ),
+      GoRoute(
+        path: '/category-funds',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return _slideRight(
+            state,
+            CategoryDetailScreen(
+              categoryTitle: extra['categoryTitle'] as String? ?? 'Category',
+              categoryIcon: extra['categoryIcon'] as String? ?? '⛪',
+              categoryFunds: extra['categoryFunds'] as List<FundItem>? ?? [],
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/contribute',

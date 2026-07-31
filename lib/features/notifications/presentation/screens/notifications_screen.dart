@@ -45,12 +45,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     Icon(Icons.lock_clock_rounded, size: 64, color: Colors.orange),
                     SizedBox(height: 16),
                     Text(
-                      'Broadcast Stream Initializing',
+                      'ስርጭት በመጀመር ላይ',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Live push notifications will connect when authenticated by your Diocese or Parish Admin.',
+                      'ቀጥታ ማሳወቂያዎች በሀገረ ስብከትዎ ወይም በደብር አስተዳዳሪዎ ሲረጋገጡ ይገናኛሉ።',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey, fontSize: 13),
                     ),
@@ -77,15 +77,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 final ts = (data['createdAt'] as Timestamp?)?.toDate();
                 final timeStr = ts != null
                     ? '${ts.day}/${ts.month} ${ts.hour.toString().padLeft(2, '0')}:${ts.minute.toString().padLeft(2, '0')}'
-                    : 'Just now';
+                    : 'አሁን';
 
                 items.add(_NotifyItem(
                   id: doc.id,
-                  title: data['title'] ?? '📢 Announcement',
+                  title: data['title'] ?? '📢 ማስታወቂያ',
                   body: data['body'] ?? '',
                   date: timeStr,
                   icon: Icons.campaign_rounded,
-                  color: AppTheme.primaryBlue,
+                  color: AppTheme.royalEmerald,
                   isUnread: true,
                 ));
               }
@@ -99,15 +99,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.notifications_none_rounded, size: 64, color: AppTheme.primaryGold),
+                    Icon(Icons.notifications_none_rounded, size: 64, color: AppTheme.imperialGold),
                     SizedBox(height: 16),
                     Text(
-                      'No Broadcast Announcements',
+                      'ምንም የስርጭት ማስታወቂያ የለም',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Broadcast notifications sent from your Diocese or Parish Admin will appear here in real-time.',
+                      'ከሀገረ ስብከትዎ ወይም ከደብር አስተዳዳሪዎ የተላኩ የስርጭት ማሳወቂያዎች እዚህ ወዲያውኑ ይታያሉ።',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey, fontSize: 13),
                     ),

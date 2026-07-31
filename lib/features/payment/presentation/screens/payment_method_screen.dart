@@ -4,17 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:church/app/theme.dart';
 import 'package:church/core/widgets/primary_button.dart';
 import 'package:church/core/widgets/loading_overlay.dart';
-import 'package:church/core/widgets/animated_count_text.dart';
 import 'package:church/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church/features/contributions/data/contribution_model.dart';
 import 'package:church/features/contributions/presentation/providers/contribution_provider.dart';
-import 'package:church/features/payment/data/chapa_service.dart';
 import 'package:church/features/payment/data/telebirr_service.dart';
 import 'package:church/l10n/app_localizations.dart';
 import 'package:church/core/logger/app_logger.dart';
 import 'package:uuid/uuid.dart';
 
-final chapaServiceProvider = Provider<ChapaService>((ref) => ChapaService());
 final telebirrServiceProvider = Provider<TelebirrService>((ref) => TelebirrService());
 
 class PaymentMethodScreen extends ConsumerStatefulWidget {
@@ -35,8 +32,11 @@ class PaymentMethodScreen extends ConsumerStatefulWidget {
 
 class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
     with SingleTickerProviderStateMixin {
-  String _selectedMethod = 'chapa';
+  String _selectedMethod = 'telebirr';
   bool _isProcessing = false;
+  late double _currentAmount;
+  late final TextEditingController _amountController;
+  final FocusNode _amountFocusNode = FocusNode();
 
   late final AnimationController _entrance;
   late final Animation<double> _headerFade;
@@ -48,6 +48,11 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   @override
   void initState() {
     super.initState();
+    _currentAmount = widget.amount;
+    _amountController = TextEditingController(
+      text: widget.amount > 0 ? widget.amount.toStringAsFixed(0) : '',
+    );
+
     _entrance = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -72,29 +77,67 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
 
   @override
   void dispose() {
+    _amountController.dispose();
+    _amountFocusNode.dispose();
     _entrance.dispose();
     super.dispose();
   }
 
+  void _updateAmount(double newAmount) {
+    setState(() {
+      _currentAmount = newAmount;
+      _amountController.text = newAmount > 0 ? newAmount.toStringAsFixed(0) : '';
+    });
+  }
+
   Future<void> _processPayment() async {
+    if (_currentAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('እባክዎ ትክክለኛ የመዋጮ መጠን በብር ያስገቡ'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+      _amountFocusNode.requestFocus();
+      return;
+    }
+
+    final methodNames = {
+      'telebirr': 'Telebirr',
+      'cbebirr': 'CBE Birr',
+      'amoole': 'Amoole / Dashen',
+      'boa': 'Bank of Abyssinia',
+      'stripe': 'Stripe (Card)',
+      'awash': 'Awash Birr',
+    };
+
+    if (_selectedMethod == 'stripe') {
+      _showStripeMockSheet(methodNames['stripe']!);
+      return;
+    }
+
+    _executePaymentFlow(methodNames[_selectedMethod] ?? 'Telebirr');
+  }
+
+  Future<void> _executePaymentFlow(String methodTitle) async {
     setState(() => _isProcessing = true);
 
     final user = ref.read(authStateProvider).user;
     final userId = user?.uid ?? 'mock_user_${DateTime.now().millisecondsSinceEpoch}';
     final churchId = user?.churchId ?? 'default_church';
-    final methodTitle = _selectedMethod == 'chapa' ? 'Chapa' : 'Telebirr';
+
     final txRef = 'TX-${const Uuid().v4()}';
     final receiptNo = 'EOTC-REC-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
 
-    log.i('PaymentMethodScreen', '💳 Processing: $methodTitle — ETB ${widget.amount}');
-    await Future.delayed(const Duration(milliseconds: 600));
+    log.i('PaymentMethodScreen', '💳 Processing: $methodTitle — ETB $_currentAmount');
+    await Future.delayed(const Duration(milliseconds: 1000));
 
     final contribution = ContributionModel(
       id: txRef,
       userId: userId,
       churchId: churchId,
       type: widget.type,
-      amount: widget.amount,
+      amount: _currentAmount,
       paymentMethod: methodTitle,
       paymentRef: txRef,
       status: 'success',
@@ -111,15 +154,123 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
       setState(() => _isProcessing = false);
       context.go('/payment/success', extra: {
         'receiptNo': receiptNo,
-        'amount': widget.amount,
+        'amount': _currentAmount,
         'type': widget.type,
       });
     }
   }
 
+  void _showStripeMockSheet(String methodTitle) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.asset(
+                          'assets/icons/stripe.png',
+                          width: 28,
+                          height: 28,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.credit_card, color: AppTheme.royalEmerald),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'የስትራይፕ ካርድ ክፍያ',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.royalEmerald),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  )
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text('Enter Card details (Mock Integration)', style: TextStyle(fontSize: 12, color: Colors.black54)),
+              const SizedBox(height: 16),
+              TextFormField(
+                initialValue: '4242 •••• •••• 4242',
+                decoration: InputDecoration(
+                  labelText: 'የካርድ ቁጥር',
+                  prefixIcon: const Icon(Icons.credit_card_rounded, color: AppTheme.royalEmerald),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      initialValue: '12 / 28',
+                      decoration: InputDecoration(
+                        labelText: 'MM / YY',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      initialValue: '888',
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'CVC',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                text: 'Pay ETB ${_currentAmount.toStringAsFixed(2)} with Stripe',
+                color: AppTheme.royalEmerald,
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _executePaymentFlow('Stripe (Card)');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+
+    final methods = [
+      _MethodItem('telebirr', 'ቴሌብር', 'የኢትዮ ቴሌኮም ዋሌት', 'assets/icons/telebirr.png', Icons.phone_android_rounded),
+      _MethodItem('cbebirr', 'ሲቢኢ ብር', 'የኢትዮጵያ ንግድ ባንክ', 'assets/icons/cbe_birr.png', Icons.account_balance_rounded),
+      _MethodItem('amoole', 'አሙሌ', 'የዳሸን ባንክ ሞባይል', 'assets/icons/amoole.png', Icons.credit_card_rounded),
+      _MethodItem('boa', 'የአቢሲንያ ባንክ', 'BOA ቀጥታ / ኢ-ብር', 'assets/icons/boa.png', Icons.account_balance_wallet_rounded),
+      _MethodItem('stripe', 'ስትራይፕ ካርድ', 'ቪዛ / ማስተርካርድ / ድያስፖራ', 'assets/icons/stripe.png', Icons.payment_rounded),
+      _MethodItem('awash', 'አዋሽ ብር', 'የአዋሽ ባንክ ቀጥታ', 'assets/icons/awash.png', Icons.domain_rounded),
+    ];
 
     return LoadingOverlay(
       isLoading: _isProcessing,
@@ -127,14 +278,13 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
       child: Scaffold(
         appBar: AppBar(title: Text(l10n.selectPaymentMethod), elevation: 0),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
-
-                // Amount display — counts up
+                // Interactive Editable Amount Card
                 FadeTransition(
                   opacity: _headerFade,
                   child: SlideTransition(
@@ -143,34 +293,130 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppTheme.primaryBlue, AppTheme.primaryBlue.withValues(alpha: 0.85)],
+                        gradient: const LinearGradient(
+                          colors: [AppTheme.royalEmerald, Color(0xFF004D38)],
                         ),
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
+                            color: AppTheme.royalEmerald.withValues(alpha: 0.35),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
                       child: Column(
                         children: [
-                          const Text(
-                            'TOTAL TO PAY',
-                            style: TextStyle(color: Colors.white60, fontSize: 12, letterSpacing: 1.5),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.edit_note_rounded, color: AppTheme.imperialGold, size: 18),
+                              SizedBox(width: 6),
+                              Text(
+                                'TOTAL CONTRIBUTION AMOUNT',
+                                style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          AnimatedCountText(
-                            end: widget.amount,
-                            prefix: 'ETB ',
-                            currency: true,
-                            duration: const Duration(milliseconds: 1400),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(height: 12),
+
+                          // Editable Money Textfield
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: AppTheme.imperialGold.withValues(alpha: 0.6),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'ETB ',
+                                  style: TextStyle(
+                                    color: AppTheme.imperialGold,
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Flexible(
+                                  child: TextField(
+                                    controller: _amountController,
+                                    focusNode: _amountFocusNode,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    textAlign: TextAlign.center,
+                                    cursorColor: AppTheme.imperialGold,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: '0.00',
+                                      hintStyle: TextStyle(color: Colors.white38, fontSize: 32, fontWeight: FontWeight.bold),
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      filled: false,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    onChanged: (val) {
+                                      final parsed = double.tryParse(val) ?? 0.0;
+                                      setState(() {
+                                        _currentAmount = parsed;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Quick Preset Amount Chips
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [100.0, 500.0, 1000.0, 5000.0].map((amt) {
+                                final isSelected = _currentAmount == amt;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: GestureDetector(
+                                    onTap: () => _updateAmount(amt),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppTheme.imperialGold
+                                            : Colors.white.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppTheme.imperialGold
+                                              : Colors.white30,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '+${amt.toStringAsFixed(0)} ETB',
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.black87 : Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ),
                         ],
@@ -179,58 +425,70 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
 
                 FadeTransition(
                   opacity: _cardsFade,
                   child: Text(
                     l10n.selectPaymentMethod,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.royalEmerald),
                   ),
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
-                // Payment method cards
+                // Grid of Payment Methods (ShrinkWrapped inside SingleChildScrollView to prevent overflow)
                 FadeTransition(
                   opacity: _cardsFade,
                   child: SlideTransition(
                     position: _cardsSlide,
-                    child: Column(
-                      children: [
-                        _AnimatedPaymentCard(
-                          value: 'chapa',
-                          selected: _selectedMethod == 'chapa',
-                          icon: Icons.payment_rounded,
-                          iconColor: Colors.blue,
-                          title: l10n.chapa,
-                          subtitle: l10n.chapaDesc,
-                          onTap: () => setState(() => _selectedMethod = 'chapa'),
-                        ),
-                        const SizedBox(height: 14),
-                        _AnimatedPaymentCard(
-                          value: 'telebirr',
-                          selected: _selectedMethod == 'telebirr',
-                          icon: Icons.phone_android_rounded,
-                          iconColor: Colors.green,
-                          title: l10n.telebirr,
-                          subtitle: l10n.telebirrDesc,
-                          onTap: () => setState(() => _selectedMethod = 'telebirr'),
-                        ),
-                      ],
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.85,
+                      ),
+                      itemCount: methods.length,
+                      itemBuilder: (context, i) {
+                        final m = methods[i];
+                        final isSelected = _selectedMethod == m.id;
+                        return TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: 1),
+                          duration: Duration(milliseconds: 300 + (i * 50)),
+                          curve: Curves.elasticOut,
+                          builder: (context, scale, child) {
+                            return Transform.scale(
+                              scale: scale,
+                              child: _PaymentGridCard(
+                                item: m,
+                                selected: isSelected,
+                                onTap: () => setState(() => _selectedMethod = m.id),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
 
-                const Spacer(),
+                const SizedBox(height: 20),
 
                 FadeTransition(
                   opacity: _btnFade,
                   child: PrimaryButton(
-                    text: l10n.pay(widget.amount.toStringAsFixed(2)),
+                    text: _currentAmount > 0
+                        ? 'Pay ${_currentAmount.toStringAsFixed(2)} ETB'
+                        : 'የመዋጮ መጠን ያስገቡ',
+                    color: AppTheme.royalEmerald,
                     onPressed: _processPayment,
                   ),
                 ),
+
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -240,142 +498,168 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen>
   }
 }
 
-/// Payment card with animated border glow and shimmer on selection.
-class _AnimatedPaymentCard extends StatefulWidget {
-  final String value;
-  final bool selected;
-  final IconData icon;
-  final Color iconColor;
+class _MethodItem {
+  final String id;
   final String title;
   final String subtitle;
+  final String assetPath;
+  final IconData fallbackIcon;
+  const _MethodItem(this.id, this.title, this.subtitle, this.assetPath, this.fallbackIcon);
+}
+
+/// Smooth, polished payment method selector (4-per-row)
+class _PaymentGridCard extends StatefulWidget {
+  final _MethodItem item;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _AnimatedPaymentCard({
-    required this.value,
+  const _PaymentGridCard({
+    required this.item,
     required this.selected,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
     required this.onTap,
   });
 
   @override
-  State<_AnimatedPaymentCard> createState() => _AnimatedPaymentCardState();
+  State<_PaymentGridCard> createState() => _PaymentGridCardState();
 }
 
-class _AnimatedPaymentCardState extends State<_AnimatedPaymentCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _selectCtrl;
-  late final Animation<double> _selectScale;
-  late final Animation<double> _glowOpacity;
+class _PaymentGridCardState extends State<_PaymentGridCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
 
   @override
   void initState() {
     super.initState();
-    _selectCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _selectScale = Tween<double>(begin: 1.0, end: 1.025).animate(
-      CurvedAnimation(parent: _selectCtrl, curve: Curves.easeOutBack),
-    );
-    _glowOpacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _selectCtrl, curve: Curves.easeOut),
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _scaleAnim = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
     );
   }
 
   @override
-  void didUpdateWidget(covariant _AnimatedPaymentCard old) {
-    super.didUpdateWidget(old);
-    if (widget.selected && !old.selected) {
-      _selectCtrl.forward(from: 0);
-    } else if (!widget.selected && old.selected) {
-      _selectCtrl.reverse();
+  void didUpdateWidget(_PaymentGridCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selected && !oldWidget.selected) {
+      _controller.forward();
+    } else if (!widget.selected && oldWidget.selected) {
+      _controller.reverse();
     }
   }
 
   @override
   void dispose() {
-    _selectCtrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _selectCtrl,
-      builder: (_, _) => Transform.scale(
-        scale: _selectScale.value,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
+    return GestureDetector(
+      onTap: () {
+        widget.onTap();
+        _controller.forward().then((_) => _controller.reverse());
+      },
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             decoration: BoxDecoration(
               color: widget.selected
-                  ? AppTheme.primaryGold.withValues(alpha: 0.05)
+                  ? AppTheme.royalEmerald.withValues(alpha: 0.12)
                   : Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: widget.selected ? AppTheme.primaryGold : AppTheme.primaryBlue.withValues(alpha: 0.12),
+                color: widget.selected
+                    ? AppTheme.royalEmerald
+                    : Colors.grey.shade200,
                 width: widget.selected ? 2 : 1,
               ),
               boxShadow: [
-                if (widget.selected)
-                  BoxShadow(
-                    color: AppTheme.primaryGold.withValues(alpha: 0.22 * _glowOpacity.value),
-                    blurRadius: 18,
-                    offset: const Offset(0, 4),
-                  ),
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: widget.selected
+                      ? AppTheme.royalEmerald.withValues(alpha: 0.18)
+                      : Colors.black.withValues(alpha: 0.04),
+                  blurRadius: widget.selected ? 12 : 4,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 280),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: widget.iconColor.withValues(alpha: widget.selected ? 0.18 : 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(widget.icon, color: widget.iconColor, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                // Animated Image Container
+                Transform.scale(
+                  scale: _scaleAnim.value,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Text(
-                        widget.title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: widget.selected ? AppTheme.primaryBlue : Colors.black87,
+                      // Main image circle
+                      Container(
+                        width: 46,
+                        height: 46,
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          border: Border.all(
+                            color: widget.selected
+                                ? AppTheme.royalEmerald
+                                : Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Image.asset(
+                          widget.item.assetPath,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, _) => Icon(
+                            widget.item.fallbackIcon,
+                            color: AppTheme.royalEmerald,
+                            size: 24,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        widget.subtitle,
-                        style: const TextStyle(fontSize: 12, color: Colors.black45),
-                      ),
+                      // Animated Checkmark
+                      if (widget.selected)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppTheme.royalEmerald,
+                            ),
+                            child: const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 11,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                AnimatedOpacity(
-                  opacity: widget.selected ? 1 : 0,
-                  duration: const Duration(milliseconds: 250),
-                  child: const Icon(Icons.radio_button_checked_rounded, color: AppTheme.primaryGold),
+                const SizedBox(height: 8),
+                // Title
+                Text(
+                  widget.item.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: widget.selected ? FontWeight.bold : FontWeight.w600,
+                    color: widget.selected ? AppTheme.royalEmerald : Colors.black87,
+                  ),
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

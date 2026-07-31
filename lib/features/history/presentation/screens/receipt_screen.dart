@@ -134,7 +134,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                             ),
                           ],
                           border: Border.all(
-                            color: AppTheme.primaryGold.withValues(alpha: 0.2),
+                            color: AppTheme.imperialGold.withValues(alpha: 0.2),
                           ),
                         ),
                         child: SingleChildScrollView(
@@ -149,7 +149,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: AppTheme.primaryBlue,
+                                  color: AppTheme.royalEmerald,
                                   letterSpacing: 1.1,
                                 ),
                                 textAlign: TextAlign.center,
@@ -206,7 +206,7 @@ class _ReceiptScreenState extends State<ReceiptScreen>
                                         style: const TextStyle(
                                           fontSize: 26,
                                           fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryGold,
+                                          color: AppTheme.imperialGold,
                                         ),
                                       ),
                                     ],
@@ -308,13 +308,13 @@ class _PulsingIconState extends State<_PulsingIcon>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppTheme.primaryGold.withValues(alpha: 0.12),
+          color: AppTheme.imperialGold.withValues(alpha: 0.12),
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(color: AppTheme.primaryGold.withValues(alpha: 0.2), blurRadius: 14),
+            BoxShadow(color: AppTheme.imperialGold.withValues(alpha: 0.2), blurRadius: 14),
           ],
         ),
-        child: const Icon(Icons.church_rounded, color: AppTheme.primaryGold, size: 34),
+        child: const Icon(Icons.church_rounded, color: AppTheme.imperialGold, size: 34),
       ),
     );
   }
@@ -368,7 +368,7 @@ class _PrintRowState extends State<_PrintRow> with SingleTickerProviderStateMixi
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(widget.label, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
-              Text(widget.value, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue, fontSize: 13)),
+              Text(widget.value, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.royalEmerald, fontSize: 13)),
             ],
           ),
         ),
@@ -487,7 +487,7 @@ class _Dashed extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 1),
               height: 1,
-              color: i.isEven ? AppTheme.primaryGold.withValues(alpha: 0.2) : Colors.transparent,
+              color: i.isEven ? AppTheme.imperialGold.withValues(alpha: 0.2) : Colors.transparent,
             ),
           ),
         ),

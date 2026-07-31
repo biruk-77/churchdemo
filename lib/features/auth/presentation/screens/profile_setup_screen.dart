@@ -145,7 +145,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen>
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue,
+                            color: AppTheme.royalEmerald,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -170,7 +170,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen>
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue,
+                            color: AppTheme.royalEmerald,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -180,7 +180,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen>
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
                             hintText: l10n.fullNameHint,
-                            prefixIcon: const Icon(Icons.person_rounded, color: AppTheme.primaryBlue),
+                            prefixIcon: const Icon(Icons.person_rounded, color: AppTheme.royalEmerald),
                           ),
                           validator: (v) => (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
                         ),
@@ -190,7 +190,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen>
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue,
+                            color: AppTheme.royalEmerald,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -199,7 +199,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen>
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             hintText: l10n.emailHint,
-                            prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.primaryBlue),
+                            prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.royalEmerald),
                           ),
                           validator: (v) {
                             if (v != null && v.trim().isNotEmpty) {
@@ -280,10 +280,10 @@ class _PulsingAvatarState extends State<_PulsingAvatar>
             height: 78,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.primaryBlue,
+              color: AppTheme.royalEmerald,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.35),
+                  color: AppTheme.royalEmerald.withValues(alpha: 0.35),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -311,7 +311,7 @@ class _RingsPainter extends CustomPainter {
     for (int i = 0; i < 3; i++) {
       final t = ((phase + i / 3.0) % 1.0);
       final r = maxR * t;
-      paint.color = AppTheme.primaryGold.withValues(alpha: (1 - t) * 0.5);
+      paint.color = AppTheme.imperialGold.withValues(alpha: (1 - t) * 0.5);
       canvas.drawCircle(Offset(cx, cy), r, paint);
     }
   }

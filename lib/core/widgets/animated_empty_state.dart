@@ -102,7 +102,7 @@ class _AnimatedEmptyStateState extends State<AnimatedEmptyState>
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlue,
+                color: AppTheme.royalEmerald,
               ),
               textAlign: TextAlign.center,
               startDelay: const Duration(milliseconds: 800),

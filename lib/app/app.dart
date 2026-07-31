@@ -18,6 +18,7 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light, // always cream — ignore device dark mode
       routerConfig: router,
+      locale: const Locale('am'), // default to Amharic regardless of device locale
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

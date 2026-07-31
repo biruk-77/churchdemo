@@ -66,14 +66,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryBlue,
+                        color: AppTheme.royalEmerald,
                         borderRadius: BorderRadius.circular(22),
                         border: const Border.fromBorderSide(
-                          BorderSide(color: AppTheme.primaryGold, width: 2),
+                          BorderSide(color: AppTheme.imperialGold, width: 2),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.4),
+                            color: AppTheme.royalEmerald.withValues(alpha: 0.4),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                           ),
@@ -89,7 +89,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               const Text(
                                 'EOTC MEMBER CARD',
                                 style: TextStyle(
-                                  color: AppTheme.primaryGold,
+                                  color: AppTheme.imperialGold,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                   letterSpacing: 1.5,
@@ -97,15 +97,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               ),
                               SpinningRing(
                                 size: 44,
-                                color: AppTheme.primaryGold,
+                                color: AppTheme.imperialGold,
                                 period: const Duration(seconds: 6),
-                                child: const Icon(Icons.church_rounded, color: AppTheme.primaryGold, size: 22),
+                                child: const Icon(Icons.church_rounded, color: AppTheme.imperialGold, size: 22),
                               ),
                             ],
                           ),
                           const SizedBox(height: 28),
                           Text(
-                            user?.displayName ?? 'Guest Member',
+                            user?.displayName ?? 'እንግዳ አባል',
                             style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 6),
@@ -117,7 +117,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('MEMBERSHIP ID', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                                  const Text('የአባልነት መታወቂያ', style: TextStyle(color: Colors.white38, fontSize: 10)),
                                   const SizedBox(height: 4),
                                   Text(
                                     user != null ? 'EOTC-${user.uid.substring(0, 8).toUpperCase()}' : 'N/A',
@@ -128,11 +128,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  const Text('ROLE', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                                  const Text('ሚና', style: TextStyle(color: Colors.white38, fontSize: 10)),
                                   const SizedBox(height: 4),
                                   Text(
                                     (user?.role ?? 'member').toUpperCase(),
-                                    style: const TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold, fontSize: 13),
+                                    style: const TextStyle(color: AppTheme.imperialGold, fontWeight: FontWeight.bold, fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -151,22 +151,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               FadeTransition(
                 opacity: _listFade,
                 child: Card(
+                  elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: Column(
                     children: [
+                      // Transaction History Navigation Tile
                       ListTile(
-                        leading: const Icon(Icons.email, color: AppTheme.primaryBlue),
-                        title: Text(l10n.email),
-                        subtitle: Text(user?.email ?? 'Not set'),
+                        onTap: () => context.push('/history'),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.royalEmerald.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.receipt_long_rounded, color: AppTheme.royalEmerald, size: 22),
+                        ),
+                        title: Text(
+                          l10n.transactionHistory,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        subtitle: const Text('ደረሰኞችንና ያለፉ መዋጮዎችን ይመልከቱ'),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.royalEmerald),
                       ),
                       const Divider(height: 1, indent: 56),
                       ListTile(
-                        leading: const Icon(Icons.church_rounded, color: AppTheme.primaryBlue),
+                        leading: const Icon(Icons.email, color: AppTheme.royalEmerald),
+                        title: Text(l10n.email),
+                        subtitle: Text(user?.email ?? 'አልገባም'),
+                      ),
+                      const Divider(height: 1, indent: 56),
+                      ListTile(
+                        leading: const Icon(Icons.church_rounded, color: AppTheme.royalEmerald),
                         title: Text(l10n.myChurch),
                         subtitle: Text(
                           user?.churchId != null
                               ? 'ID: ${user!.churchId!.substring(0, 8).toUpperCase()}...'
-                              : 'No church selected',
+                              : 'ምንም ቤተ ክርስቲያን አልተመረጠም',
                         ),
                         trailing: TextButton.icon(
                           onPressed: () => context.push('/church-select'),
@@ -176,7 +196,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       ),
                       const Divider(height: 1, indent: 56),
                       ListTile(
-                        leading: const Icon(Icons.language, color: AppTheme.primaryBlue),
+                        leading: const Icon(Icons.language, color: AppTheme.royalEmerald),
                         title: Text(l10n.language),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,

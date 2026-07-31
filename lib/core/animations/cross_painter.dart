@@ -11,7 +11,7 @@ class EthiopianCrossPainter extends CustomPainter {
     this.glowProgress = 0.0,
   });
 
-  static const _gold = Color(0xFFC9A227);
+  static const _gold = Colors.white;
 
   @override
   void paint(Canvas canvas, Size size) {

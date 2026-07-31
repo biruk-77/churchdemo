@@ -41,7 +41,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       duration: const Duration(milliseconds: 2200),
     )..repeat();
 
-    // Cross draws from ~400 ms to ~2000 ms
     _crossDraw = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _masterController,
@@ -95,11 +94,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _checkAuth() async {
-    // Minimum splash display time
     await Future.delayed(const Duration(milliseconds: 2800));
     if (!mounted) return;
 
-    // If session restore hasn't finished yet, wait for it (up to 3s extra)
     final deadline = DateTime.now().add(const Duration(seconds: 3));
     while (mounted &&
         ref.read(authStateProvider).status == AuthStatus.initial &&
@@ -137,17 +134,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF090D24), AppTheme.primaryBlue, Color(0xFF0C1033)],
+            colors: [Color(0xFF003827), AppTheme.royalEmerald, Color(0xFF002419)],
             stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: Stack(
           children: [
-            // Layer 1 — floating golden dust particles
+            // Layer 1 — floating crisp white & mint particles
             const Positioned.fill(
               child: ParticleField(
                 count: 50,
-                colors: [AppTheme.primaryGold, Color(0xFFFFD700), Colors.white],
+                colors: [Colors.white, Color(0xFFA5D6A7), Color(0xFFE8F5E9)],
               ),
             ),
 
@@ -158,7 +155,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 builder: (_, _) => CustomPaint(
                   painter: PulsingRingPainter(
                     phase: _ringsController.value,
-                    color: AppTheme.primaryGold,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -208,7 +205,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
                   const SizedBox(height: 14),
 
-                  // Gold shimmer divider
+                  // White shimmer divider
                   FadeTransition(
                     opacity: _textOpacity,
                     child: Container(
@@ -217,7 +214,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(colors: [
                           Colors.transparent,
-                          AppTheme.primaryGold,
+                          Colors.white,
                           Colors.transparent,
                         ]),
                         borderRadius: BorderRadius.circular(1),
@@ -236,7 +233,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         'Ethiopian Orthodox Tewahedo Church',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppTheme.primaryGold,
+                          color: Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.8,
@@ -255,7 +252,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         'ዲጂታል የአስራትና በኩራት ማሰባሰቢያ',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white54,
+                          color: Colors.white70,
                           fontSize: 13,
                         ),
                       ),
@@ -264,7 +261,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
                   const Spacer(flex: 2),
 
-                  // Custom golden arc loader
+                  // Custom white arc loader
                   FadeTransition(
                     opacity: _loaderOpacity,
                     child: const _GoldenLoader(),
@@ -337,7 +334,7 @@ class _ArcLoaderPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
-        ..color = AppTheme.primaryGold.withValues(alpha: 0.15),
+        ..color = Colors.white.withValues(alpha: 0.2),
     );
 
     // Animated arc
@@ -350,7 +347,7 @@ class _ArcLoaderPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
         ..strokeCap = StrokeCap.round
-        ..color = AppTheme.primaryGold,
+        ..color = Colors.white,
     );
   }
 

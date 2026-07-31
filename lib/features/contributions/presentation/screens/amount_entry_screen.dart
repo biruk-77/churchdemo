@@ -124,7 +124,7 @@ class _AmountEntryScreenState extends ConsumerState<AmountEntryScreen>
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryBlue,
+                                  color: AppTheme.royalEmerald,
                                 ),
                               ),
                             ),
@@ -143,7 +143,7 @@ class _AmountEntryScreenState extends ConsumerState<AmountEntryScreen>
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.royalEmerald,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -157,9 +157,9 @@ class _AmountEntryScreenState extends ConsumerState<AmountEntryScreen>
                                     suffixStyle: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryGold,
+                                      color: AppTheme.imperialGold,
                                     ),
-                                    prefixIcon: const Icon(Icons.monetization_on_rounded, color: AppTheme.primaryGold),
+                                    prefixIcon: const Icon(Icons.monetization_on_rounded, color: AppTheme.imperialGold),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) return l10n.requiredField;
@@ -194,15 +194,15 @@ class _AmountEntryScreenState extends ConsumerState<AmountEntryScreen>
                                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                         decoration: BoxDecoration(
                                           color: selected
-                                              ? AppTheme.primaryGold.withValues(alpha: 0.18)
+                                              ? AppTheme.imperialGold.withValues(alpha: 0.18)
                                               : Colors.white,
                                           borderRadius: BorderRadius.circular(24),
                                           border: Border.all(
-                                            color: selected ? AppTheme.primaryGold : AppTheme.primaryBlue.withValues(alpha: 0.2),
+                                            color: selected ? AppTheme.imperialGold : AppTheme.royalEmerald.withValues(alpha: 0.2),
                                             width: selected ? 2 : 1,
                                           ),
                                           boxShadow: selected
-                                              ? [BoxShadow(color: AppTheme.primaryGold.withValues(alpha: 0.2), blurRadius: 8)]
+                                              ? [BoxShadow(color: AppTheme.imperialGold.withValues(alpha: 0.2), blurRadius: 8)]
                                               : null,
                                         ),
                                         child: Text(
@@ -210,7 +210,7 @@ class _AmountEntryScreenState extends ConsumerState<AmountEntryScreen>
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13,
-                                            color: selected ? AppTheme.primaryBlue : Colors.black54,
+                                            color: selected ? AppTheme.royalEmerald : Colors.black54,
                                           ),
                                         ),
                                       ),
@@ -234,7 +234,7 @@ class _AmountEntryScreenState extends ConsumerState<AmountEntryScreen>
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.royalEmerald,
                                   ),
                                 ),
                                 const SizedBox(height: 8),

@@ -246,7 +246,7 @@ class AuthNotifier extends Notifier<AuthState> {
         verificationFailed: (e) {
           state = state.copyWith(
             status:       AuthStatus.unauthenticated,
-            errorMessage: e.message ?? 'Verification failed',
+            errorMessage: e.message ?? 'ማረጋገጫ አልተሳካም',
             isLoading:    false,
           );
         },
